@@ -431,9 +431,8 @@ export const solidityAddressToContractIdString = (address: string): string => {
 };
 
 export function getDefaultLedgerId() {
-  const isDevEnvironment = devDomains.includes(window.location.hostname);
+  const isDevEnvironment = (import.meta.env.VITE_HEDERA_NETWORK || "testnet").toLowerCase().trim() === "testnet";
   const storedNetwork =
     localStorage.getItem("activeNetwork") && LedgerId.fromString(localStorage.getItem("activeNetwork") as string);
-
   return storedNetwork || (isDevEnvironment ? LedgerId.TESTNET : LedgerId.MAINNET);
 }
