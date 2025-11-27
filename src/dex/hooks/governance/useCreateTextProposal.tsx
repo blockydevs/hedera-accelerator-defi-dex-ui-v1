@@ -24,6 +24,8 @@ export function useCreateTextProposal(handleSendProposesSuccess: (transactionRes
     GovernanceMutations.CreateTextProposal
   >(
     async (params: CreateTextProposalData) => {
+      if (!signer) return;
+
       return DexService.sendCreateTextProposalTransaction({ ...params, signer });
     },
     {

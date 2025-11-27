@@ -1,5 +1,5 @@
 import { Container, Flex } from "@chakra-ui/react";
-import { PageFooter, TopMenuBar } from "@dex/layouts";
+import { TopMenuBar } from "@dex/layouts";
 import { Outlet } from "react-router-dom";
 import { ScrollToTop } from "@dex/utils";
 import { useWalletConnection } from "@dex/hooks";
@@ -21,7 +21,6 @@ export function AppLayout(props: AppLayoutProps) {
           <Outlet />
         </Flex>
       </Container>
-      {<PageFooter />}
     </>
   );
 }

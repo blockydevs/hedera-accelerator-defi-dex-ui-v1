@@ -91,6 +91,8 @@ export function GovernanceProposalConfirmationDetails(props: GovernanceProposalC
     resetServerState();
     if (proposal) {
       const signer = wallet.getSigner();
+      if (!signer) return;
+
       castVote.mutate({
         contractId: contractId,
         proposalId: proposal.proposalId ?? "",
@@ -105,6 +107,8 @@ export function GovernanceProposalConfirmationDetails(props: GovernanceProposalC
     resetServerState();
     if (proposal) {
       const signer = wallet.getSigner();
+      if (!signer) return;
+
       executeProposal.mutate({
         contractId: contractId,
         proposal: proposal,
@@ -124,6 +128,8 @@ export function GovernanceProposalConfirmationDetails(props: GovernanceProposalC
     resetServerState();
     if (proposal) {
       const signer = wallet.getSigner();
+      if (!signer) return;
+
       cancelProposal.mutate({
         contractId: contractId,
         proposal: proposal,

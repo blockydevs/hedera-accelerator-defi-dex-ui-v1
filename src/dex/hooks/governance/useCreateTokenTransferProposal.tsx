@@ -33,6 +33,8 @@ export function useCreateTokenTransferProposal(
         params.tokenToTransfer,
         params.amountToTransfer
       );
+      if (!signer) return;
+
       return DexService.sendCreateTransferTokenProposalTransaction({
         ...params,
         amountToTransfer: preciseTransferTokenAmount,

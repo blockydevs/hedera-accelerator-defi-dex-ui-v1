@@ -23,6 +23,8 @@ export function useLockNFTToken(
   return useMutation<TransactionResponse | undefined, Error, UseLockNFTTokenParams, DAOMutations.LockNFTToken>(
     async (params: UseLockNFTTokenParams) => {
       const { nftSerialId, spenderContractId, tokenId } = params;
+      if (!signer) return;
+
       await DexService.setNFTAllowance({
         tokenId,
         nftSerialId,

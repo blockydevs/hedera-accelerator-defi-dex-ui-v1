@@ -26,6 +26,8 @@ export function useChangeAdmin(handleOnSuccess: HandleOnSuccess) {
   return useMutation<TransactionResponse | undefined, Error, UseChangeAdminParams, DAOMutations.ChangeAdmin>(
     async (params: UseChangeAdminParams) => {
       const { safeAccountId, proxyAddress } = params;
+      if (!signer) return;
+
       return DexService.sendChangeAdminForProposalTransaction(safeAccountId, proxyAddress, signer);
     },
     {

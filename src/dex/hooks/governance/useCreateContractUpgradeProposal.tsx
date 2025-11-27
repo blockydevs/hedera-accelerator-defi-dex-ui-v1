@@ -28,6 +28,8 @@ export function useCreateContractUpgradeProposal(
     GovernanceMutations.CreateContractUpgradeProposal
   >(
     async (params: CreateContractUpgradeProposalData) => {
+      if (!signer) return;
+
       return DexService.sendCreateContractUpgradeProposalTransaction({ ...params, signer });
     },
     {

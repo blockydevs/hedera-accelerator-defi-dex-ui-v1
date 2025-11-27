@@ -27,6 +27,8 @@ export function useUnlockGODToken(
     GovernanceMutations.ClaimGODToken
   >(
     async (params: UseUnLockGODTokenParams) => {
+      if (!signer) return;
+
       return DexService.sendUnLockGODTokenTransaction({ ...params, signer, tokenDecimals });
     },
     {

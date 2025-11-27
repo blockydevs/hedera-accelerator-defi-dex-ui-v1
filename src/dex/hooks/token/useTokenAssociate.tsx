@@ -13,8 +13,7 @@ export function useAssociateToken(handleOnSuccess: HandleOnSuccess) {
   const { wallet } = useDexContext(({ wallet }) => ({
     wallet,
   }));
-  const signer = wallet.getSigner();
-  const accountId = wallet.savedPairingData?.accountIds[0] ?? "";
+
   return useMutation<
     TransactionResponse | undefined,
     Error,
@@ -23,6 +22,14 @@ export function useAssociateToken(handleOnSuccess: HandleOnSuccess) {
   >(
     async (params: UseAssociateTokenParams) => {
       const { tokenId } = params;
+
+      const signer = wallet.getSigner();
+      const accountId = wallet.savedPairingData?.accountIds[0] ?? "";
+
+      if (!signer) {
+        throw new Error("Wallet is not connected. Please connect your wallet first.");
+      }
+
       return DexService.associateTokenToWallet({ tokenId, signer, accountId });
     },
     {

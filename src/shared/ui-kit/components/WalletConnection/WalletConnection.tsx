@@ -224,9 +224,11 @@ export const WalletConnectionBase = (props: WalletConnectionProps): ReactElement
                 Disconnect Wallet
               </Button>
             </Center>
-            <Center>
-              <WalletTokenAssociation />
-            </Center>
+            {connectionState === HashConnectConnectionState.Paired && (
+              <Center>
+                <WalletTokenAssociation />
+              </Center>
+            )}
           </Flex>
         </PopoverContent>
       </Popover>
