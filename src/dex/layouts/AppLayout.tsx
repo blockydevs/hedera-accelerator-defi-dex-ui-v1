@@ -6,12 +6,11 @@ import { useWalletConnection } from "@dex/hooks";
 
 interface AppLayoutProps {
   navOptions: string[];
-  hideFooter?: boolean;
   brandText?: string;
 }
 
 export function AppLayout(props: AppLayoutProps) {
-  const { navOptions, hideFooter = false, brandText } = props;
+  const { navOptions, brandText } = props;
   useWalletConnection();
   return (
     <>
@@ -22,7 +21,7 @@ export function AppLayout(props: AppLayoutProps) {
           <Outlet />
         </Flex>
       </Container>
-      {!hideFooter && <PageFooter />}
+      {<PageFooter />}
     </>
   );
 }
