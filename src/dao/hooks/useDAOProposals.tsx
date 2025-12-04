@@ -16,8 +16,6 @@ import { LogDescription } from "ethers/lib/utils";
 import { DAOEvents } from "@dao/services";
 import { GovernanceProposalType } from "@dex/store";
 
-export const GOVERNOR_ADDRESS: string = import.meta.env.VITE_GOVERNOR_ADDRESS.trim();
-
 export function useDAOProposals(daoAccountId: string) {
   function groupByProposalId(logs: any[]): [string, any[]][] {
     const grouped = groupBy(logs, (log: any) => log?.proposalId?.toString() ?? "undefined");
@@ -56,7 +54,8 @@ export function useDAOProposals(daoAccountId: string) {
   return useQuery<Proposal[], Error>(
     [DAOQueries.DAOs, DAOQueries.Proposals, daoAccountId],
     async () => {
-      const logs: any[] = await DexService.fetchGovernanceDAOLogs(GOVERNOR_ADDRESS);
+      const governorAddress = await DexService.fetchGovernorAddress(daoAccountId);
+      const logs: any[] = await DexService.fetchGovernanceDAOLogs(governorAddress);
       const groupedProposals = groupByProposalId(logs);
 
       const proposals: Proposal[] = await Promise.all(
