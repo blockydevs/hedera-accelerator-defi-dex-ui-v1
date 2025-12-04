@@ -56,7 +56,7 @@ export async function getVotingPower(callContract: string, owner: string) {
   });
 
   const balance = contractInterface.decodeFunctionResult("balanceOfVoter", ethers.utils.arrayify(response.data.result));
-  return balance[0].toNumber();
+  return balance[0].toString();
 }
 
 async function fetchDAOSettingsPageDetails(

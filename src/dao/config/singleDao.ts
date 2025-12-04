@@ -12,14 +12,11 @@ export const DEFAULT_DAO_OVERVIEW_PATH = `/${Routes.Overview}`;
 
 export type DexMinMax = { min?: number; max?: number };
 export type DexSettingsConfig = {
-  parameterStore?: {
-    contractId?: string;
-    abi?: ContractInterface;
+  parameterStore: {
+    contractId: string;
+    abi: ContractInterface;
     methods?: {
-      maxTradeBps?: string;
-      maxSlippageBps?: string;
-      tradeCooldownSec?: string;
-      getRiskParameters?: string;
+      getRiskParameters: string;
     };
     minMax?: {
       maxTradeBps?: DexMinMax;
@@ -27,13 +24,13 @@ export type DexSettingsConfig = {
       tradeCooldownSec?: DexMinMax;
     };
   };
-  pairWhitelist?: {
-    contractId?: string;
-    abi?: ContractInterface;
-    methods?: {
-      getPairs?: string;
-      removePair?: string;
-      addPair?: string;
+  pairWhitelist: {
+    contractId: string;
+    abi: ContractInterface;
+    methods: {
+      getPairs: string;
+      removePair: string;
+      addPair: string;
     };
   };
 };
@@ -43,9 +40,6 @@ export const SINGLE_DAO_DEX_SETTINGS: DexSettingsConfig = {
     contractId: PARAMETER_STORE_CONTRACT_ID,
     abi: (ParameterStore as any).abi,
     methods: {
-      maxTradeBps: "maxTradeBps",
-      maxSlippageBps: "maxSlippageBps",
-      tradeCooldownSec: "tradeCooldownSec",
       getRiskParameters: "getRiskParameters",
     },
     minMax: {

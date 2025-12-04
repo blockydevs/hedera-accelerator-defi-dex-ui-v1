@@ -29,11 +29,12 @@ function useParamStoreValues() {
         let tradeCooldownSec: number | undefined;
 
         try {
-          maxTradeBps = Number(await contract[cfg.methods!.maxTradeBps!]().toString());
-          maxSlippageBps = Number(await contract[cfg.methods!.maxSlippageBps!]().toString());
-          tradeCooldownSec = Number(await contract[cfg.methods!.tradeCooldownSec!]().toString());
-        } catch {
-          console.error("Failed to read maxTradeBps, maxSlippageBps or tradeCooldownSec from ParameterStore");
+          const riskParameters = await contract[cfg.methods!.getRiskParameters!]();
+          maxTradeBps = riskParameters.maxTradeBps;
+          maxSlippageBps = riskParameters.maxSlippageBps;
+          tradeCooldownSec = riskParameters.tradeCooldownSec;
+        } catch (error) {
+          console.error("Failed to read riskParameters from ParameterStore", error);
         }
 
         if (!maxTradeBps && !maxSlippageBps && !tradeCooldownSec) {
