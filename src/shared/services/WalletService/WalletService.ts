@@ -17,7 +17,11 @@ function createWalletService(mirrorNodeService: MirrorNodeServiceType) {
 
   const getSigner = (accountId: string): HashConnectSigner | null => {
     if (accountId) {
-      return hashconnect.getSigner(AccountId.fromString(accountId));
+      try {
+        return hashconnect.getSigner(AccountId.fromString(accountId));
+      } catch (error) {
+        return null;
+      }
     }
 
     return null;
