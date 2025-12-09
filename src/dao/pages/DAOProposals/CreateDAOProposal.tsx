@@ -287,30 +287,11 @@ export function CreateDAOProposal() {
         const psAddress = ContractId.fromString(psCfg.contractId).toSolidityAddress();
         const { JsonRpcSigner } = DexService.getJsonRpcProviderAndSigner();
         const readContract = new ethers.Contract(psAddress, psCfg.abi, JsonRpcSigner);
-
-        let currentMaxTrade: number | undefined;
-        let currentMaxSlippage: number | undefined;
-        let currentCooldown: number | undefined;
-
         const riskParameters = await readContract[psCfg.methods!.getRiskParameters!]();
 
-        currentMaxTrade = Number(riskParameters.maxTradeBps.toString());
-        currentMaxSlippage = Number(riskParameters.maxSlippageBps.toString());
-        currentCooldown = Number(riskParameters.tradeCooldownSec.toString());
-
-        if (currentMaxTrade === undefined || currentMaxSlippage === undefined || currentCooldown === undefined) {
-          try {
-            const readAllMethod = psCfg.methods?.getRiskParameters;
-            const tuple = await readContract[readAllMethod!]();
-            if (Array.isArray(tuple) && tuple?.length >= 3) {
-              currentMaxTrade = Number(tuple[0].toString());
-              currentMaxSlippage = Number(tuple[1].toString());
-              currentCooldown = Number(tuple[2].toString());
-            }
-          } catch {
-            console.error("failed to read readAll");
-          }
-        }
+        const currentMaxTrade = Number(riskParameters._maxTradeBps);
+        const currentMaxSlippage = Number(riskParameters._maxSlippageBps);
+        const currentCooldown = Number(riskParameters._tradeCooldownSec);
 
         const newMaxTrade = maxTradeBps === undefined ? currentMaxTrade ?? 0 : Number(maxTradeBps);
         const newMaxSlippage = maxSlippageBps === undefined ? currentMaxSlippage ?? 0 : Number(maxSlippageBps);
