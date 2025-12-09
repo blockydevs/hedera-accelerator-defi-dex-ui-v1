@@ -1,11 +1,11 @@
 import { Flex } from "@chakra-ui/react";
-import { createBrowserRouter, createRoutesFromElements, Navigate, Route } from "react-router-dom";
+import { createHashRouter, createRoutesFromElements, Navigate, Route } from "react-router-dom";
 import { AppLayout, NotFound } from "@dex/layouts";
 import { Routes } from "./routes";
 import * as Pages from "@dao/pages";
 import { DEFAULT_DAO_OVERVIEW_PATH } from "@dao/config/singleDao";
 
-export const router = createBrowserRouter(
+export const router = createHashRouter(
   createRoutesFromElements(
     <Route path={Routes.Home} element={<AppLayout navOptions={[]} brandText="HuffyDAO" />}>
       <Route index element={<Navigate to={DEFAULT_DAO_OVERVIEW_PATH} />} />
