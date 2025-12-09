@@ -25,6 +25,7 @@ function createDexService() {
     fetchAccountTokenBalances,
     fetchAllDAOs: daoSDK.fetchAllDAOs,
     fetchGovernanceDAOLogs: daoSDK.fetchGovernanceDAOLogs,
+    fetchGovernorAddress: daoSDK.fetchGovernorAddress,
     fetchHederaGnosisSafeLogs: daoSDK.fetchHederaGnosisSafeLogs,
     proposeAddOwnerWithThreshold: daoSDK.proposeAddOwnerWithThreshold,
     proposeRemoveOwnerWithThreshold: daoSDK.proposeRemoveOwnerWithThreshold,

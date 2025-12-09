@@ -4,7 +4,6 @@ import { MirrorNodeTransaction, MirrorNodeTokenTransfer, MirrorNodeAccountBalanc
 import { TokenPair } from "@dex/store/poolsSlice";
 import { getTimestamp24HoursAgo } from "./time";
 import { HBARTokenId, HBARTokenId_MAINNET } from "@dex/services";
-import { getTransactionFeeRateDisplay } from "@shared/utils";
 import { ethers } from "ethers";
 
 // TODO: Need to get token coversion rate from USDC_TOKEN_ID
@@ -127,39 +126,10 @@ const calculateUserPoolLiquidity = (percentOfPool: BigNumber, totalValueLocked: 
   return percentOfPool.times(totalValueLocked);
 };
 
-interface CalculatePercentOfPoolParams {
-  /** Token types and balances owned by the user's account. */
-  userTokenBalances: MirrorNodeAccountBalance;
-  /** Token types and balances owned by the liquidity pool account. */
-  poolTokenBalances: MirrorNodeAccountBalance;
-  /** Account ID of the liquidity pool. */
-  liquidityTokenAccountId: string;
-}
-
 interface calculatePercentOfPoolFromTotalSupplyParams {
   userTokenBalances: MirrorNodeAccountBalance;
   tokenPair: TokenPair;
 }
-
-/**
- * Calculates the percentage in decimal format of the pool owned by an account.
- * mLP = My LP tokens for a pool
- * aLP = Total LP tokens for a pool
- * m = mLP/aLP
- * @param params - {@link CalculatePercentOfPoolParams}
- * @returns The percentage of the pool owned by an account.
- */
-const calculatePercentOfPool = (params: CalculatePercentOfPoolParams): BigNumber => {
-  const { userTokenBalances, poolTokenBalances, liquidityTokenAccountId } = params;
-  const poolLPTokenBalance = getTokenBalance(poolTokenBalances, liquidityTokenAccountId);
-  const userLPTokenBalance = getTokenBalance(userTokenBalances, liquidityTokenAccountId);
-  if (isNil(poolLPTokenBalance) || isNil(userLPTokenBalance)) {
-    console.error("Cannot find mirror node balance for LP token account ID.");
-    return BigNumber(0);
-  } else {
-    return BigNumber(userLPTokenBalance).div(poolLPTokenBalance);
-  }
-};
 
 const calculatePercentOfPoolFromTotalSupply = (params: calculatePercentOfPoolFromTotalSupplyParams): BigNumber => {
   const {
@@ -188,34 +158,11 @@ const isHbarToken = (tokenIdOrAddress: string): boolean => {
   );
 };
 
-interface getAllPoolTransactionFeeParams {
-  tokenPairs: TokenPair[] | null;
-  tokenAId: string | undefined;
-  tokenBId: string | undefined;
-}
-
-const getAllPoolTransactionFee = (params: getAllPoolTransactionFeeParams) => {
-  return (
-    params.tokenPairs
-      ?.filter(
-        (pair) =>
-          (pair?.tokenA.tokenMeta.tokenId === params.tokenAId && pair?.tokenB.tokenMeta.tokenId === params.tokenBId) ||
-          (pair?.tokenB.tokenMeta.tokenId === params.tokenAId && pair?.tokenA.tokenMeta.tokenId === params.tokenBId)
-      )
-      .flatMap((pair) => ({
-        label: getTransactionFeeRateDisplay(pair.tokenA.tokenMeta.fee?.toNumber()),
-        value: pair.tokenA.tokenMeta.fee?.toNumber() ?? 0,
-      })) ?? []
-  );
-};
-
 export {
   calculateTotalValueLockedForPool,
   calculateVolume,
-  calculatePercentOfPool,
   calculateUserPoolLiquidity,
   getTransactionsFromLast24Hours,
   calculatePercentOfPoolFromTotalSupply,
   isHbarToken,
-  getAllPoolTransactionFee,
 };

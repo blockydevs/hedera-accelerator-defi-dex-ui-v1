@@ -7,7 +7,7 @@ import { DEFAULT_DAO_OVERVIEW_PATH } from "@dao/config/singleDao";
 
 export const router = createHashRouter(
   createRoutesFromElements(
-    <Route path={Routes.Home} element={<AppLayout navOptions={[]} hideFooter brandText="HuffyDAO" />}>
+    <Route path={Routes.Home} element={<AppLayout navOptions={[]} brandText="HuffyDAO" />}>
       <Route index element={<Navigate to={DEFAULT_DAO_OVERVIEW_PATH} />} />
       {
         <Route path={Routes.CreateDAOProposal} element={<Pages.CreateDAOProposal />}>

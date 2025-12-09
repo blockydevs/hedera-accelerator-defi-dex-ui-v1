@@ -287,47 +287,11 @@ export function CreateDAOProposal() {
         const psAddress = ContractId.fromString(psCfg.contractId).toSolidityAddress();
         const { JsonRpcSigner } = DexService.getJsonRpcProviderAndSigner();
         const readContract = new ethers.Contract(psAddress, psCfg.abi, JsonRpcSigner);
+        const riskParameters = await readContract[psCfg.methods!.getRiskParameters!]();
 
-        let currentMaxTrade: number | undefined;
-        let currentMaxSlippage: number | undefined;
-        let currentCooldown: number | undefined;
-        try {
-          if (psCfg.methods?.maxTradeBps) {
-            const v = await readContract[psCfg.methods.maxTradeBps]();
-            currentMaxTrade = Number(v.toString());
-          }
-        } catch {
-          console.error("failed to read maxTradeBps");
-        }
-        try {
-          if (psCfg.methods?.maxSlippageBps) {
-            const v = await readContract[psCfg.methods.maxSlippageBps]();
-            currentMaxSlippage = Number(v.toString());
-          }
-        } catch {
-          console.error("failed to read maxSlippageBps");
-        }
-        try {
-          if (psCfg.methods?.tradeCooldownSec) {
-            const v = await readContract[psCfg.methods.tradeCooldownSec]();
-            currentCooldown = Number(v.toString());
-          }
-        } catch {
-          console.error("failed to read tradeCooldownSec");
-        }
-        if (currentMaxTrade === undefined || currentMaxSlippage === undefined || currentCooldown === undefined) {
-          try {
-            const readAllMethod = psCfg.methods?.getRiskParameters;
-            const tuple = await readContract[readAllMethod!]();
-            if (Array.isArray(tuple) && tuple?.length >= 3) {
-              currentMaxTrade = Number(tuple[0].toString());
-              currentMaxSlippage = Number(tuple[1].toString());
-              currentCooldown = Number(tuple[2].toString());
-            }
-          } catch {
-            console.error("failed to read readAll");
-          }
-        }
+        const currentMaxTrade = Number(riskParameters._maxTradeBps);
+        const currentMaxSlippage = Number(riskParameters._maxSlippageBps);
+        const currentCooldown = Number(riskParameters._tradeCooldownSec);
 
         const newMaxTrade = maxTradeBps === undefined ? currentMaxTrade ?? 0 : Number(maxTradeBps);
         const newMaxSlippage = maxSlippageBps === undefined ? currentMaxSlippage ?? 0 : Number(maxSlippageBps);

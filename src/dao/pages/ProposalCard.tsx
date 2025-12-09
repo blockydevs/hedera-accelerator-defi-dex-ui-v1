@@ -25,7 +25,7 @@ export const ProposalCard = (props: ProposalCardProps) => {
   const timeRemaining = "";
   const votingEndTime = "";
   const { amount, token, transactionHash, proposalId } = proposal;
-  const tokenSymbol = token?.data.symbol === "GOD" ? "HTK" : token?.data.symbol;
+  const tokenSymbol = token?.data.symbol;
   const RightContent = () => (
     <Flex gap="4" alignItems="center">
       {

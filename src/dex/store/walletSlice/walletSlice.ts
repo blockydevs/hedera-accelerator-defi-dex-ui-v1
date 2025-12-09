@@ -23,7 +23,17 @@ const createWalletSlice: WalletSlice = (set, get): WalletStore => {
     ...initialWalletState,
     getSigner: () => {
       const { wallet } = get();
+
+      if (wallet.hashConnectConnectionState !== HashConnectConnectionState.Paired) {
+        return null;
+      }
+
       const accountId = wallet.savedPairingData?.accountIds[0] ?? "";
+
+      if (!accountId) {
+        return null;
+      }
+
       const signer = DexService.getSigner(accountId);
       return signer as HashConnectSigner;
     },

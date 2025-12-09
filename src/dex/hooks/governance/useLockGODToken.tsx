@@ -25,6 +25,8 @@ export function useLockGODToken(
     async (params: UseLockGODTokenParams) => {
       const { amount, tokenHolderAddress, governanceTokenId } = params;
       const { precision, decimals } = (await DexService.fetchTokenData(governanceTokenId)).data;
+      if (!signer) return;
+
       await DexService.setTokenAllowance({
         tokenId: governanceTokenId,
         walletId: wallet.savedPairingData?.accountIds[0] ?? "",
@@ -32,6 +34,7 @@ export function useLockGODToken(
         tokenAmount: amount * precision,
         signer: signer,
       });
+
       return DexService.sendLockGODTokenTransaction({
         signer,
         tokenHolderAddress,

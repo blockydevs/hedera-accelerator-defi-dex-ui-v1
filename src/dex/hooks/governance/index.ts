@@ -8,8 +8,5 @@ export * from "./useFetchLockedGovToken";
 export * from "./useCanUserUnlockGODToken";
 export * from "./useLockGODToken";
 export * from "./useUnlockGODToken";
-export * from "./useCreateTextProposal";
-export * from "./useCreateContractUpgradeProposal";
-export * from "./useCreateTokenTransferProposal";
 export * from "./useGetLatestBlockNumber";
 export * from "./types";

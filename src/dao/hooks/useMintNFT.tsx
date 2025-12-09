@@ -17,6 +17,8 @@ export function useMintNFT(handleOnSuccess: HandleOnSuccess) {
 
   return useMutation<TransactionResponse | undefined, Error, UseMintNFTParams, DAOMutations.MintNFTTokens>(
     async (params: UseMintNFTParams) => {
+      if (!signer) return;
+
       return DexService.sendMintNFTTokensTransaction({ ...params, signer });
     },
     {

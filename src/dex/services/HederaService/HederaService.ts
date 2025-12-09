@@ -2,17 +2,14 @@ import { HashConnectSigner } from "hashconnect/dist/signer";
 import { BigNumber } from "bignumber.js";
 import {
   AccountId,
-  ContractId,
   ContractExecuteTransaction,
   ContractFunctionParameters,
-  TransferTransaction,
-  TokenAssociateTransaction,
-  TransactionResponse,
+  ContractId,
   Hbar,
+  TransactionResponse,
 } from "@hashgraph/sdk";
-import { Contracts, Tokens, TREASURY_ID } from "../constants";
+import { Contracts, TREASURY_ID } from "../constants";
 import { PairContractFunctions } from "./types";
-import { client, getTreasurer } from "./utils";
 import GovernorService from "./GovernorService";
 import TokenService from "./TokenService";
 import DAOService from "../../../dao/services/contracts";
@@ -29,8 +26,6 @@ type HederaServiceType = ReturnType<typeof createHederaService>;
  */
 
 function createHederaService() {
-  const { treasuryId, treasuryKey } = getTreasurer();
-
   let _precision = BigNumber(100000000);
   const initHederaService = async () => {
     // Since the Precision if fixed from Backend keeping it constant for a while.
@@ -39,13 +34,6 @@ function createHederaService() {
 
   const getPrecision = () => {
     return _precision;
-  };
-
-  const withPrecision = (value: number): BigNumber => {
-    if (_precision === undefined) {
-      throw new Error("Precision is undefined");
-    }
-    return BigNumber(value).multipliedBy(_precision);
   };
 
   interface AddLiquidityParams {
@@ -101,8 +89,7 @@ function createHederaService() {
       .setTransactionValidDuration(params.transactionDeadline)
       .freezeWithSigner(params.signer);
 
-    const removeLiquidityTx = await removeLiquidity.executeWithSigner(params.signer);
-    return removeLiquidityTx;
+    return await removeLiquidity.executeWithSigner(params.signer);
   };
 
   interface SwapTokenParams {
@@ -130,47 +117,8 @@ function createHederaService() {
       .setPayableAmount(new Hbar(params.HbarAmount))
       .setTransactionValidDuration(params.transactionDeadline)
       .freezeWithSigner(params.signer);
-    const swapTokenResponse = await swapTokenTransaction.executeWithSigner(params.signer);
-    return swapTokenResponse;
+    return await swapTokenTransaction.executeWithSigner(params.signer);
   }
-
-  const get1000L49ABCDTokens = async (
-    receivingAccountId: string,
-    associatedTokenIds: string[] | undefined,
-    signer: HashConnectSigner
-  ) => {
-    const tokenQuantity = withPrecision(1000).toNumber();
-    const targetAccountId = AccountId.fromString(receivingAccountId);
-    const tokenAccountIds = [Tokens.TokenAAccountId, Tokens.TokenBAccountId, Tokens.TokenCAccountId];
-
-    const tokensToAssociate = tokenAccountIds.reduce((_tokensToAssociate: string[], tokenId: string | undefined) => {
-      if (associatedTokenIds && !associatedTokenIds.includes(tokenId ?? "")) {
-        _tokensToAssociate.push(tokenId || "");
-      }
-      return _tokensToAssociate;
-    }, []);
-
-    if (tokensToAssociate.length > 0) {
-      const tokenAssociateTx = new TokenAssociateTransaction()
-        .setAccountId(receivingAccountId)
-        .setTokenIds(tokensToAssociate);
-      const tokenAssociateSignedTx = await tokenAssociateTx.freezeWithSigner(signer);
-      await tokenAssociateSignedTx.executeWithSigner(signer);
-    }
-
-    const transaction = new TransferTransaction()
-      .addTokenTransfer(Tokens.TokenAAccountId, treasuryId, -tokenQuantity)
-      .addTokenTransfer(Tokens.TokenAAccountId, targetAccountId, tokenQuantity)
-      .addTokenTransfer(Tokens.TokenBAccountId, treasuryId, -tokenQuantity)
-      .addTokenTransfer(Tokens.TokenBAccountId, targetAccountId, tokenQuantity)
-      .addTokenTransfer(Tokens.TokenCAccountId, treasuryId, -tokenQuantity)
-      .addTokenTransfer(Tokens.TokenCAccountId, targetAccountId, tokenQuantity)
-      .freezeWith(client);
-
-    const signTx = await transaction.sign(treasuryKey);
-    const txResponse = await signTx.execute(client);
-    return txResponse;
-  };
 
   interface CreatePoolDetails {
     firstTokenAddress: string;
@@ -200,13 +148,11 @@ function createHederaService() {
       .setNodeAccountIds([new AccountId(3)])
       .setTransactionValidDuration(transactionDeadline)
       .freezeWithSigner(signer);
-    const transactionResponse = createPoolTransaction.executeWithSigner(signer);
-    return transactionResponse;
+    return createPoolTransaction.executeWithSigner(signer);
   };
 
   return {
     initHederaService,
-    get1000L49ABCDTokens,
     getPrecision,
     swapToken,
     addLiquidity,

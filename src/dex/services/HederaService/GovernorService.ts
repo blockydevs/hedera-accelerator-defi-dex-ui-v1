@@ -1,19 +1,11 @@
 import { BigNumber } from "bignumber.js";
-import {
-  AccountId,
-  ContractExecuteTransaction,
-  ContractFunctionParameters,
-  ContractId,
-  TokenId,
-  TransactionResponse,
-} from "@hashgraph/sdk";
-import { Contracts, GovernanceTokenId } from "../constants";
+import { ContractExecuteTransaction, ContractFunctionParameters, ContractId } from "@hashgraph/sdk";
 import { GovernorContractFunctions } from "./types";
 import { HashConnectSigner } from "hashconnect/dist/signer";
 import { checkTransactionResponseForError } from "./utils";
+import { Proposal } from "@dao/hooks";
 import { DexService } from "@dex/services";
 import { ethers } from "ethers";
-import { Proposal } from "@dao/hooks";
 
 /**
  * General format of service calls:
@@ -69,185 +61,6 @@ const cancelProposal = async (params: CancelProposalParams) => {
   const response = await cancelProposalTransaction.executeWithSigner(signer);
   checkTransactionResponseForError(response, GovernorContractFunctions.Cancel);
   return response;
-};
-
-interface CreateTransferTokenProposalParams {
-  title: string;
-  description: string;
-  linkToDiscussion: string;
-  accountToTransferTo: string;
-  tokenToTransfer: string;
-  amountToTransfer: BigNumber;
-  nftTokenSerialId: number;
-  signer: HashConnectSigner;
-}
-
-const sendCreateTransferTokenProposalTransaction = async (
-  params: CreateTransferTokenProposalParams
-): Promise<TransactionResponse> => {
-  const {
-    title,
-    description,
-    linkToDiscussion,
-    accountToTransferTo,
-    tokenToTransfer,
-    amountToTransfer,
-    nftTokenSerialId,
-    signer,
-  } = params;
-  const transferFromAddress = signer.getAccountId().toSolidityAddress();
-  const transferToAddress = AccountId.fromString(accountToTransferTo).toSolidityAddress();
-  const tokenToTransferAddress = TokenId.fromString(tokenToTransfer).toSolidityAddress();
-  const transferTokenContractId = ContractId.fromString(Contracts.Governor.TransferToken.ProxyId);
-  const walletId = signer.getAccountId().toString();
-  await DexService.setTokenAllowance({
-    tokenId: GovernanceTokenId,
-    walletId,
-    spenderContractId: Contracts.Governor.TransferToken.ProxyId,
-    tokenAmount: (await DexService.fetchTokenData(GovernanceTokenId)).data.precision,
-    signer,
-  });
-  const contractCallParams = new ContractFunctionParameters()
-    .addString(title)
-    .addString(description)
-    .addString(linkToDiscussion)
-    .addAddress(transferFromAddress)
-    .addAddress(transferToAddress)
-    .addAddress(tokenToTransferAddress)
-    .addUint256(amountToTransfer)
-    .addUint256(nftTokenSerialId);
-
-  const createProposalTransaction = await new ContractExecuteTransaction()
-    .setContractId(transferTokenContractId)
-    .setFunction(GovernorContractFunctions.CreateProposal, contractCallParams)
-    .setGas(9000000)
-    .freezeWithSigner(signer);
-  return await createProposalTransaction.executeWithSigner(signer);
-};
-
-interface CreateContractUpgradeProposalParams {
-  title: string;
-  description: string;
-  linkToDiscussion: string;
-  contractToUpgrade: string;
-  newContractProxyId: string;
-  nftTokenSerialId: number;
-  signer: HashConnectSigner;
-}
-
-const sendCreateContractUpgradeProposalTransaction = async (
-  params: CreateContractUpgradeProposalParams
-): Promise<TransactionResponse> => {
-  const { title, linkToDiscussion, description, contractToUpgrade, newContractProxyId, nftTokenSerialId, signer } =
-    params;
-  const contractIdToUpgrade = ContractId.fromString(contractToUpgrade).toSolidityAddress();
-  const upgradeProposalProxyId = ContractId.fromString(newContractProxyId).toSolidityAddress();
-  const contractUpgradeContractId = ContractId.fromString(Contracts.Governor.ContractUpgrade.ProxyId);
-  const walletId = signer.getAccountId().toString();
-  /* NOTE: Metadata is not currently in use for this proposal type. Should be removed from the Smart Contracts */
-  const metadata = "";
-  await DexService.setTokenAllowance({
-    tokenId: GovernanceTokenId,
-    walletId,
-    spenderContractId: Contracts.Governor.ContractUpgrade.ProxyId,
-    tokenAmount: (await DexService.fetchTokenData(GovernanceTokenId)).data.precision,
-    signer,
-  });
-  const contractCallParams = new ContractFunctionParameters()
-    .addString(title)
-    .addString(description)
-    .addString(linkToDiscussion)
-    .addString(metadata)
-    .addAddress(upgradeProposalProxyId)
-    .addAddress(contractIdToUpgrade)
-    .addUint256(nftTokenSerialId);
-  const createUpgradeProposalTransaction = await new ContractExecuteTransaction()
-    .setContractId(contractUpgradeContractId)
-    .setFunction(GovernorContractFunctions.CreateProposal, contractCallParams)
-    .setGas(9000000)
-    .freezeWithSigner(signer);
-  const proposalTransactionResponse = await createUpgradeProposalTransaction.executeWithSigner(signer);
-  checkTransactionResponseForError(proposalTransactionResponse, GovernorContractFunctions.CreateProposal);
-  return proposalTransactionResponse;
-};
-
-interface CreateTextProposalParams {
-  title: string;
-  description: string;
-  linkToDiscussion: string;
-  nftTokenSerialId: number;
-  signer: HashConnectSigner;
-}
-
-const sendCreateTextProposalTransaction = async (params: CreateTextProposalParams): Promise<TransactionResponse> => {
-  const { title, linkToDiscussion, description, nftTokenSerialId, signer } = params;
-  const textProposalContractId = ContractId.fromString(Contracts.Governor.TextProposal.ProxyId);
-  const walletId = signer.getAccountId().toString();
-  /* NOTE: Metadata is not currently in use for this proposal type. Should be removed from the Smart Contracts */
-  const metadata = "";
-
-  await DexService.setTokenAllowance({
-    tokenId: GovernanceTokenId,
-    walletId,
-    spenderContractId: Contracts.Governor.TextProposal.ProxyId,
-    tokenAmount: (await DexService.fetchTokenData(GovernanceTokenId)).data.precision,
-    signer,
-  });
-  const contractCallParams = new ContractFunctionParameters()
-    .addString(title)
-    .addString(description)
-    .addString(linkToDiscussion)
-    .addString(metadata)
-    .addUint256(nftTokenSerialId);
-  const createProposalTransaction = await new ContractExecuteTransaction()
-    .setContractId(textProposalContractId)
-    .setFunction(GovernorContractFunctions.CreateProposal, contractCallParams)
-    .setGas(9000000)
-    .freezeWithSigner(signer);
-  const proposalTransactionResponse = await createProposalTransaction.executeWithSigner(signer);
-  checkTransactionResponseForError(proposalTransactionResponse, GovernorContractFunctions.CreateProposal);
-  return proposalTransactionResponse;
-};
-
-interface ExecuteProposalParams {
-  contractId: string;
-  proposal: Proposal;
-  signer: HashConnectSigner;
-  transfersFromAccount?: string;
-  transfersToAccount?: string;
-  tokenId?: string;
-  tokenAmount?: number;
-}
-
-const executeProposal = async (params: ExecuteProposalParams) => {
-  const { contractId, proposal, signer, transfersFromAccount, tokenId, tokenAmount } = params;
-  const governorContractId = ContractId.fromString(contractId);
-
-  const contractFunctionParameters = new ContractFunctionParameters()
-    .addAddressArray(proposal.coreInformation?.inputs?.targets ?? [])
-    .addUint256Array(proposal.coreInformation?.inputs?._values?.map((value) => Number(value)) ?? [])
-    .addBytesArray(
-      proposal.coreInformation?.inputs?.calldatas?.map((item: string) => ethers.utils.arrayify(item)) ?? []
-    )
-    .addBytes32(stringToByetes32(proposal.title));
-
-  if (tokenId && transfersFromAccount && tokenAmount) {
-    await DexService.setTokenAllowance({
-      tokenId,
-      walletId: transfersFromAccount,
-      spenderContractId: contractId,
-      tokenAmount,
-      signer: signer,
-    });
-  }
-  const executeProposalTransaction = await new ContractExecuteTransaction()
-    .setContractId(governorContractId)
-    .setFunction(GovernorContractFunctions.Execute, contractFunctionParameters)
-    .setGas(9000000)
-    .freezeWithSigner(signer);
-  const executeTransactionResponse = await executeProposalTransaction.executeWithSigner(signer);
-  checkTransactionResponseForError(executeTransactionResponse, GovernorContractFunctions.Execute);
-  return executeTransactionResponse;
 };
 
 const stringToByetes32 = (input: string) => {
@@ -321,27 +134,57 @@ const sendUnLockGODTokenTransaction = async (params: SendUnLockGODTokenTransacti
   return sendUnLockGODTokenResponse;
 };
 
-interface GetLatestProposalDetailsParams {
-  proposalId: string;
+interface ExecuteProposalParams {
   contractId: string;
+  proposal: Proposal;
   signer: HashConnectSigner;
+  transfersFromAccount?: string;
+  transfersToAccount?: string;
+  tokenId?: string;
+  tokenAmount?: number;
 }
 
-const getLatestProposalDetails = async (params: GetLatestProposalDetailsParams) => {
-  console.log("");
+const executeProposal = async (params: ExecuteProposalParams) => {
+  const { contractId, proposal, signer, transfersFromAccount, tokenId, tokenAmount } = params;
+  const governorContractId = ContractId.fromString(contractId);
+  // eslint-disable-next-line max-len
+  const targetContractAddress =
+    proposal.coreInformation?.inputs.targets?.[0] || "0xfbc5902e84632a2b29ab7038c83a7ab3380d54c8";
+  console.log("targetContractAddress", targetContractAddress);
+  const contractFunctionParameters = new ContractFunctionParameters()
+    .addAddressArray([targetContractAddress] ?? [])
+    .addUint256Array(proposal.coreInformation?.inputs?._values?.map((value) => Number(value)) ?? [])
+    .addBytesArray(
+      proposal.coreInformation?.inputs?.calldatas?.map((item: string) => ethers.utils.arrayify(item)) ?? []
+    )
+    .addBytes32(stringToByetes32(proposal.title));
+
+  if (tokenId && transfersFromAccount && tokenAmount) {
+    await DexService.setTokenAllowance({
+      tokenId,
+      walletId: transfersFromAccount,
+      spenderContractId: contractId,
+      tokenAmount,
+      signer: signer,
+    });
+  }
+  const executeProposalTransaction = await new ContractExecuteTransaction()
+    .setContractId(governorContractId)
+    .setFunction(GovernorContractFunctions.Execute, contractFunctionParameters)
+    .setGas(9000000)
+    .freezeWithSigner(signer);
+  const executeTransactionResponse = await executeProposalTransaction.executeWithSigner(signer);
+  checkTransactionResponseForError(executeTransactionResponse, GovernorContractFunctions.Execute);
+  return executeTransactionResponse;
 };
 
 const GovernorService = {
   sendClaimGODTokenTransaction,
   castVote,
   cancelProposal,
-  sendCreateTextProposalTransaction,
-  sendCreateTransferTokenProposalTransaction,
   executeProposal,
-  sendCreateContractUpgradeProposalTransaction,
   sendLockGODTokenTransaction,
   sendUnLockGODTokenTransaction,
-  getLatestProposalDetails,
 };
 
 export default GovernorService;

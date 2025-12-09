@@ -15,6 +15,7 @@ import {
 } from "@dex/services";
 import { getEventArgumentsByName } from "../../dex/services/utils";
 import FTDAOFactoryJSON from "../../dex/services/abi/FTDAOFactory.json";
+import FTDAOJSON from "../../dex/services/abi/FTDAO.json";
 import HederaGnosisSafeJSON from "../../dex/services/abi/HederaGnosisSafe.json";
 import MultiSigDAOJSON from "../../dex/services/abi/MultiSigDAO.json";
 import BaseDAOJSON from "../../dex/services/abi/BaseDAO.json";
@@ -55,7 +56,7 @@ export async function getVotingPower(callContract: string, owner: string) {
   });
 
   const balance = contractInterface.decodeFunctionResult("balanceOfVoter", ethers.utils.arrayify(response.data.result));
-  return balance[0].toNumber();
+  return balance[0].toString();
 }
 
 async function fetchDAOSettingsPageDetails(
@@ -628,4 +629,17 @@ export async function sendExecuteMultiSigTransaction(params: ExecuteMultiSigTran
   const executeMultiSigTransactionResponse = await executeMultiSigTransaction.executeWithSigner(signer);
   checkTransactionResponseForError(executeMultiSigTransactionResponse, HederaGnosisSafeFunctions.ExecuteTransaction);
   return executeMultiSigTransactionResponse;
+}
+
+export async function fetchGovernorAddress(daoAddress: string): Promise<string> {
+  const contractInterface = new ethers.utils.Interface(FTDAOJSON.abi);
+  const response = await DexService.callContract({
+    data: contractInterface.encodeFunctionData("governorAddress", []),
+    to: daoAddress,
+  });
+  const [governorAddress] = contractInterface.decodeFunctionResult(
+    "governorAddress",
+    ethers.utils.arrayify(response.data.result)
+  );
+  return governorAddress;
 }

@@ -21,6 +21,8 @@ export function useDepositTokens(handleOnSuccess: HandleOnSuccess) {
 
   return useMutation<TransactionResponse | undefined, Error, UseDepositTokensParams, DAOMutations.DepositTokens>(
     async (params: UseDepositTokensParams) => {
+      if (!signer) return;
+
       return DexService.sendTokensTransaction({ ...params, signer });
     },
     {

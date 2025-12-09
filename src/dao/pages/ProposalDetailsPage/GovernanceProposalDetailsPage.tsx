@@ -109,7 +109,7 @@ export function GovernanceProposalDetailsPage() {
               amount={amount}
               receiver={""}
               tokenId={token?.data.token_id ?? "-"}
-              tokenSymbol={(token?.data.symbol === "GOD" ? "HTK" : token?.data.symbol) ?? "-"}
+              tokenSymbol={token?.data.symbol ?? "-"}
               tokenDecimals={+(token?.data.decimals ?? 0)}
               tokenType={token?.data.type ?? ""}
               event={event}
@@ -128,7 +128,7 @@ export function GovernanceProposalDetailsPage() {
               </Button>
             ) : undefined}
             <GovernanceProposalConfirmationDetails
-              tokenSymbol={(token?.data.symbol === "GOD" ? "HTK" : token?.data.symbol) ?? ""}
+              tokenSymbol={token?.data.symbol ?? ""}
               contractUpgradeLogic={contractUpgradeLogic ?? ""}
               assetHolderContractId={assetHolderContractId ?? ""}
               proposal={proposalDetails}

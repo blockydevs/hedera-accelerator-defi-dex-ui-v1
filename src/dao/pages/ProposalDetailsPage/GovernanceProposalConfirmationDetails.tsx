@@ -81,7 +81,9 @@ export function GovernanceProposalConfirmationDetails(props: GovernanceProposalC
 
   const contractEvmAddress = proposal?.contractEvmAddress ?? "";
   const contractIdQueryResults = useFetchContract(contractEvmAddress);
-  const contractId = contractIdQueryResults.data?.data.contract_id ?? "";
+  // UI override: allow forcing Governor contract id via env VITE_GOVERNOR_CONTRACT_ID
+  const envGovernorId: string = ((import.meta as any).env?.VITE_GOVERNOR_CONTRACT_ID || "").toString().trim();
+  const contractId = envGovernorId || (contractIdQueryResults.data?.data.contract_id ?? "");
   const isVotingDisabled = !proposal || isNaN(Number(votingPower)) || Number(votingPower) <= 0;
   const isAdminApprovalButtonVisible = (proposal?.data as any)?.isAdminApprovalButtonVisible ?? false;
   const isApproveAdminButtonDisabled = walletId !== (proposal?.data as any)?.proxyAdmin;
@@ -91,6 +93,8 @@ export function GovernanceProposalConfirmationDetails(props: GovernanceProposalC
     resetServerState();
     if (proposal) {
       const signer = wallet.getSigner();
+      if (!signer) return;
+
       castVote.mutate({
         contractId: contractId,
         proposalId: proposal.proposalId ?? "",
@@ -105,6 +109,8 @@ export function GovernanceProposalConfirmationDetails(props: GovernanceProposalC
     resetServerState();
     if (proposal) {
       const signer = wallet.getSigner();
+      if (!signer) return;
+
       executeProposal.mutate({
         contractId: contractId,
         proposal: proposal,
@@ -124,6 +130,8 @@ export function GovernanceProposalConfirmationDetails(props: GovernanceProposalC
     resetServerState();
     if (proposal) {
       const signer = wallet.getSigner();
+      if (!signer) return;
+
       cancelProposal.mutate({
         contractId: contractId,
         proposal: proposal,

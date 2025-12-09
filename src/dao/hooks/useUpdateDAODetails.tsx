@@ -21,6 +21,8 @@ export function useUpdateDAODetails(handleOnSuccess: HandleOnSuccess) {
 
   return useMutation<TransactionResponse | undefined, Error, UseUpdateDAODetailsParams, DAOMutations.UpdateDAODetails>(
     async (params: UseUpdateDAODetailsParams) => {
+      if (!signer) return;
+
       return DexService.sendUpdateDAODetailsTransaction({ ...params, signer });
     },
     {

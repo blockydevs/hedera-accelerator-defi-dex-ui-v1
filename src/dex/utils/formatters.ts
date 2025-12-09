@@ -10,6 +10,9 @@ type HashScanAccountIdLink = `https://hashscan.io/${"testnet" | "mainnet"}/accou
 type HashScanTokenIdLink = `https://hashscan.io/${"testnet" | "mainnet"}/token/${string}`;
 type HashScanLink = HashScanTransactionLink | HashScanAccountIdLink | HashScanTokenIdLink;
 
+function getNetwork(url: string) {
+  return url.includes("testnet") ? "testnet" : "mainnet";
+}
 /**
  * Creates a hashscan URL given a valid transaction id.
  * @param transactionId - The transaction id returned from a hedera transaction.
@@ -25,8 +28,8 @@ export function createHashScanTransactionLink(transactionId: string | undefined)
   const [id, timestamp] = transactionId.split("@");
   if (isNil(timestamp)) return "";
   const [seconds, nanoSeconds] = timestamp.split(".");
-  // TODO: set testnet/mainnet based on network
-  return `${HashScanUrl}/testnet/transactionsById/${id}-${seconds}-${nanoSeconds}`;
+  const network = getNetwork(HashScanUrl);
+  return `${HashScanUrl}/${network}/transactionsById/${id}-${seconds}-${nanoSeconds}`;
 }
 
 /**

@@ -17,7 +17,11 @@ function createWalletService(mirrorNodeService: MirrorNodeServiceType) {
 
   const getSigner = (accountId: string): HashConnectSigner | null => {
     if (accountId) {
-      return hashconnect.getSigner(AccountId.fromString(accountId));
+      try {
+        return hashconnect.getSigner(AccountId.fromString(accountId));
+      } catch (error) {
+        return null;
+      }
     }
 
     return null;
@@ -31,6 +35,26 @@ function createWalletService(mirrorNodeService: MirrorNodeServiceType) {
   };
 
   const initWalletConnection = async () => {
+    const currentNetwork = getDefaultLedgerId().toString();
+    const storedNetwork = localStorage.getItem("hashconnect_network");
+
+    if (storedNetwork && storedNetwork !== currentNetwork) {
+      console.log(`Network changed from ${storedNetwork} to ${currentNetwork}. Clearing HashConnect session data.`);
+
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith("hashconnect") || key.startsWith("walletconnect"))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+      localStorage.removeItem("reconnectionInProgress");
+    }
+
+    localStorage.setItem("hashconnect_network", currentNetwork);
+
     await hashconnect.init();
   };
 
@@ -40,6 +64,9 @@ function createWalletService(mirrorNodeService: MirrorNodeServiceType) {
 
   const getAccountBalance = async (accountId: string): Promise<AccountBalanceJson> => {
     const signer = hashconnect.getSigner(AccountId.fromString(accountId));
+    if (!signer) {
+      return { hbars: "0", tokens: [] };
+    }
 
     try {
       const walletBalance = await signer.getAccountBalance();

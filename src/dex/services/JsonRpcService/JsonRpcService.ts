@@ -13,6 +13,17 @@ const JsonRpcHashioUrl = {
 
 export type JsonRpcServiceType = ReturnType<typeof createJsonRpcService>;
 
+function getNetworkFromEnv(): keyof typeof JsonRpcHashioUrl {
+  const networkFromEnv = import.meta.env.VITE_NETWORK?.toLowerCase();
+  if (networkFromEnv === "mainnet") {
+    return "mainnet";
+  }
+  if (networkFromEnv === "previewnet") {
+    return "previewnet";
+  }
+  return "testnet";
+}
+
 export function createJsonRpcService(walletAccountId: string = TOKEN_USER_ID) {
   let JsonRpcProvider: ethers.providers.JsonRpcProvider;
   let JsonRpcSigner: ethers.providers.JsonRpcSigner;
@@ -36,7 +47,8 @@ export function createJsonRpcService(walletAccountId: string = TOKEN_USER_ID) {
   }
 
   function setJsonRpcProviderAndSigner(walletAccountId: string = TOKEN_USER_ID) {
-    JsonRpcProvider = new ethers.providers.JsonRpcProvider(JsonRpcHashioUrl.testnet);
+    const network = getNetworkFromEnv();
+    JsonRpcProvider = new ethers.providers.JsonRpcProvider(JsonRpcHashioUrl[network]);
     /**
      * getSigner() requires any solidity address to be passed in as a parameter.
      * Otherwise, the following error is throw in the console:

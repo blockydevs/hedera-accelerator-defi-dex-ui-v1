@@ -31,7 +31,7 @@ export function DAOSettings() {
                 value={dao.minimumProposalDeposit ?? 0}
                 valueStyle="p large medium"
                 valueTextColor={Color.Neutral._900}
-                valueUnitSymbol={FTToken?.data.symbol === "GOD" ? "HTK" : FTToken?.data.symbol}
+                valueUnitSymbol={FTToken?.data.symbol}
                 valueUnitSymbolColor={Color.Neutral._900}
               />
             </Flex>

@@ -1,18 +1,18 @@
 import axios from "axios";
 import { isNil, path, uniqBy } from "ramda";
 import {
-  MirrorNodeTokenById,
   MirrorNodeAccountBalance,
-  MirrorNodeBalanceResponse,
-  MirrorNodeTransaction,
-  MirrorNodeDecodedProposalEvent,
-  MirrorNodeTokenPairResponse,
-  MirrorNodeEventLog,
   MirrorNodeAccountById,
+  MirrorNodeBalanceResponse,
   MirrorNodeBlocks,
+  MirrorNodeDecodedProposalEvent,
+  MirrorNodeEventLog,
   MirrorNodeProposalEventLog,
   MirrorNodeTokenBalance,
+  MirrorNodeTokenById,
   MirrorNodeTokenNFTResponse,
+  MirrorNodeTokenPairResponse,
+  MirrorNodeTransaction,
 } from "./types";
 import { ethers } from "ethers";
 import { LogDescription } from "ethers/lib/utils";
@@ -275,7 +275,7 @@ function createMirrorNodeService(
       },
     });
 
-    const parsedEventLogs: LogDescription[] = logs.reduce((logs: LogDescription[], log: MirrorNodeEventLog) => {
+    return logs.reduce((logs: LogDescription[], log: MirrorNodeEventLog) => {
       try {
         const parsedLog = contractInterface.parseLog({ data: log.data, topics: log.topics });
         if (shouldParseAllEvents || events?.includes(parsedLog.name)) {
@@ -287,8 +287,6 @@ function createMirrorNodeService(
         return logs;
       }
     }, []);
-
-    return parsedEventLogs;
   }
 
   // TODO: Move to Governance Service
@@ -316,8 +314,7 @@ function createMirrorNodeService(
       return { ...item, contractId, proposalId: `${item.proposalId}`, votingInformation, votersList };
     });
 
-    const uniqueProposals = uniqBy((proposal: MirrorNodeDecodedProposalEvent) => proposal.proposalId, proposals);
-    return uniqueProposals;
+    return uniqBy((proposal: MirrorNodeDecodedProposalEvent) => proposal.proposalId, proposals);
   };
 
   const fetchUpgradeContractEvents = async (

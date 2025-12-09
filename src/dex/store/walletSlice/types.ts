@@ -44,7 +44,7 @@ interface WalletState {
 
 interface WalletActions {
   getTokenAmountWithPrecision: (tokenId: string, tokenAmount: number) => BigNumber;
-  getSigner: () => HashConnectSigner;
+  getSigner: () => HashConnectSigner | null;
   connectToWallet: () => void;
   disconnectWallet: () => void;
   initializeWalletConnection: () => Promise<void>;

@@ -15,7 +15,7 @@ interface GOVTokenDetailsProps {
 
 export const GOVTokenDetails = (props: GOVTokenDetailsProps) => {
   const { tokenSymbol, lockedGODToken, totalGODTokenBalance, availableGODTokenBalance } = props;
-  const displaySymbol = tokenSymbol === "GOD" ? "HTK" : tokenSymbol;
+  const displaySymbol = tokenSymbol;
   const toolTipString = `Pending amount of ${displaySymbol} token unlocks until
     the in-progress proposals are either complete or canceled`;
   return (
