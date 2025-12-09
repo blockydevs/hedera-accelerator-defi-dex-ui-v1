@@ -78,36 +78,15 @@ export const Contracts = {
 export const WALLET_LOCAL_DATA_KEY = "hashconnectData";
 
 export const TREASURY_ID = "0.0.2948681";
-export const TREASURY_KEY =
-  "3030020100300706052b8104000a04220420d750ddaf60e3089c856c5b9f7592483aeb3bf62f514a90e27c64e3aced6a3232";
-
 export const TOKEN_USER_ID = "0.0.3418035";
-export const TOKEN_USER_KEY =
-  "302e020100300506032b657004220420899ec4fb7e8153a36bd37dd9500b9057982bf76bc1f0efa5b8cb170ee2329997";
-
 export const DEX_TOKEN_PRECISION_VALUE = 8;
 export const DEBOUNCE_TIME = 500;
-export const EDITOR_DEFAULT_CHARACTER_COUNT = 7;
-
-export const Tokens = Object.freeze({
-  TokenASymbol: "LAB49A",
-  TokenAAccountId: "0.0.3418198",
-  TokenBSymbol: "LAB49B",
-  TokenBAccountId: "0.0.3418199",
-  TokenCSymbol: "LAB49C",
-  TokenCAccountId: "0.0.3418200",
-});
-
-export const USDC_TOKEN_ID = "0.0.2276691";
-
 export const GovernanceTokenId = "0.0.3418196";
 
 export const HBARTokenId = "0.0.3418197";
 export const HBARTokenId_MAINNET = "0.0.0";
-export const HBARTokenAddress = "0.0.0";
 export const HBARTokenSymbol = "HBAR";
 export const HBARSymbol = "ℏ";
-export const SENTINEL_OWNER = "0.0.1";
 export const DEFAULT_NFT_TOKEN_SERIAL_ID = 0;
 export const MINIMUM_DEPOSIT_AMOUNT = 1;
 

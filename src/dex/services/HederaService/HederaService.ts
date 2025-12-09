@@ -65,8 +65,7 @@ function createHederaService() {
       .setPayableAmount(new Hbar(params.HbarAmount))
       .setTransactionValidDuration(params.transactionDeadline)
       .freezeWithSigner(params.signer);
-    const transactionResponse = addLiquidityTransaction.executeWithSigner(params.signer);
-    return transactionResponse;
+    return addLiquidityTransaction.executeWithSigner(params.signer);
   }
 
   interface RemoveLiquidityParams {
