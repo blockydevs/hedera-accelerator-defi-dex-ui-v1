@@ -8,8 +8,6 @@ import { isHbarToken } from "@dex/utils";
 import { GovernanceProposalType } from "@dex/store";
 import { isNotNil } from "ramda";
 
-const Gas = 9000000;
-
 interface CreateProposalParams {
   governorContractId: string;
   proposalType: number;
@@ -56,17 +54,14 @@ const createProposal = async (params: CreateProposalParams) => {
     Object.values(createProposalInputs),
   ]);
 
-  const sendProposeTextProposalTransaction = await new ContractExecuteTransaction()
+  const executeTransaction = await new ContractExecuteTransaction()
     .setContractId(governorContractId)
     .setFunctionParameters(ethers.utils.arrayify(data))
-    .setGas(Gas)
+    .setGas(1000000)
     .freezeWithSigner(signer);
-  const sendProposeTextProposalTransactionResponse = await sendProposeTextProposalTransaction.executeWithSigner(signer);
-  checkTransactionResponseForError(
-    sendProposeTextProposalTransactionResponse,
-    GovernorDAOContractFunctions.CreateProposal
-  );
-  return sendProposeTextProposalTransactionResponse;
+  const executeResponse = await executeTransaction.executeWithSigner(signer);
+  checkTransactionResponseForError(executeResponse, GovernorDAOContractFunctions.CreateProposal);
+  return executeResponse;
 };
 
 interface SetUpAllowanceParams {
@@ -153,7 +148,7 @@ async function createGovernanceProposal(params: CreateGovernanceProposalParams) 
 
   if (governanceTokenId) {
     const tokenResponse = await DexService.mirrorNodeService.fetchTokenData(governanceTokenId);
-    await DexService.setUpAllowance({
+    await setUpAllowance({
       tokenId: governanceTokenId,
       nftSerialId: nftTokenSerialId,
       spenderContractId: governorContractId,

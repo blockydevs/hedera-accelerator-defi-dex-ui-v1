@@ -171,7 +171,7 @@ const executeProposal = async (params: ExecuteProposalParams) => {
   const executeProposalTransaction = await new ContractExecuteTransaction()
     .setContractId(governorContractId)
     .setFunction(GovernorContractFunctions.Execute, contractFunctionParameters)
-    .setGas(9000000)
+    .setGas(400000)
     .freezeWithSigner(signer);
   const executeTransactionResponse = await executeProposalTransaction.executeWithSigner(signer);
   checkTransactionResponseForError(executeTransactionResponse, GovernorContractFunctions.Execute);
