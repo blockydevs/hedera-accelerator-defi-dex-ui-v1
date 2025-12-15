@@ -75,7 +75,7 @@ export const VotingPower = (props: VotingPowerComponentProps) => {
           labelTextColor={Color.Neutral._500}
           labelTextStyle="p xsmall medium"
           labelOpacity="1.0"
-          value={votingPower!}
+          value={votingPower! ?? "-"}
           valueTextColor={Color.Primary._600}
           valueStyle="h3 medium"
           valueUnitSymbol={tokenData.symbol}

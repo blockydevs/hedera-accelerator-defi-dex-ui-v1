@@ -175,21 +175,16 @@ async function createGovernanceProposal(params: CreateGovernanceProposalParams) 
   });
 }
 
-async function sendHuffyRiskParametersProposal(params: any) {
+async function sendRiskParametersProposal(params: any) {
   return createGovernanceProposal({ ...params, proposalType: GovernanceProposalType.RiskParametersProposal });
 }
 
-async function sendHuffyAddTradingPairProposal(params: any) {
+async function sendAddTradingPairProposal(params: any) {
   return createGovernanceProposal({ ...params, proposalType: GovernanceProposalType.AddTradingPairProposal });
 }
 
-async function sendHuffyRemoveTradingPairProposal(params: any) {
+async function sendRemoveTradingPairProposal(params: any) {
   return createGovernanceProposal({ ...params, proposalType: GovernanceProposalType.RemoveTradingPairProposal });
 }
 
-export {
-  setUpAllowance,
-  sendHuffyRiskParametersProposal,
-  sendHuffyAddTradingPairProposal,
-  sendHuffyRemoveTradingPairProposal,
-};
+export { setUpAllowance, sendRiskParametersProposal, sendAddTradingPairProposal, sendRemoveTradingPairProposal };

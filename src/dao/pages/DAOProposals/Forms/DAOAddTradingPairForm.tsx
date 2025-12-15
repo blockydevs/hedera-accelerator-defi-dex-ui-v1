@@ -20,39 +20,47 @@ function shortenAddress(address: string, startLength: number = 6, endLength: num
 async function validateAddress(input: string): Promise<true | string> {
   const v = (input || "").trim();
   if (!v) return "Required";
+  // Accept either an EVM address or an HTS token id (e.g., 0.0.123)
   if ((ethers as any)?.utils?.isAddress?.(v)) return true;
   try {
-    TokenId.fromString(v);
+    TokenId.fromString(v); // throws if invalid
     return true;
   } catch {
-    /* ignore */
+    /* fallthrough */
   }
   return "Invalid address. Enter EVM (0x...) or HTS (0.0.x) token address.";
 }
 
-export function DAOHuffyRemoveTradingPairForm() {
+function normalizeToSolidityAddressLower(input: string): string | null {
+  const v = (input || "").trim();
+  if (!v) return null;
+  if ((ethers as any)?.utils?.isAddress?.(v)) return v.toLowerCase();
+  try {
+    return TokenId.fromString(v).toSolidityAddress().toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+export function DAOAddTradingPairForm() {
   const {
     register,
     control,
+    getValues,
     formState: { errors },
   } = useFormContext<CreateDAODexSettingsForm>();
   const [currentPairs, setCurrentPairs] = useState<{ tokenA: string; tokenB: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const {
-    fields: removeFields,
-    append: removeAppend,
-    remove: removeRemove,
-  } = useFieldArray({ control, name: "whitelistRemove" });
+  const { fields: addFields, append: addAppend, remove: addRemove } = useFieldArray({ control, name: "whitelistAdd" });
 
   useEffect(() => {
-    if (removeFields.length === 0) removeAppend({ tokenA: "", tokenB: "" });
-    if (removeFields.length > 1) {
-      for (let i = removeFields.length - 1; i >= 1; i--) removeRemove(i);
+    if (addFields.length === 0) addAppend({ tokenA: "", tokenB: "" });
+    if (addFields.length > 1) {
+      for (let i = addFields.length - 1; i >= 1; i--) addRemove(i);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [removeFields.length]);
+  }, [addFields.length]);
 
   useEffect(() => {
     let ignore = false;
@@ -126,42 +134,62 @@ export function DAOHuffyRemoveTradingPairForm() {
 
       <Box>
         <Text fontWeight="semibold" mb="2">
-          Pairs to remove
+          Pairs to add
         </Text>
         <Flex direction="column" gap="0.8rem">
-          {removeFields.map((field, index) => (
+          {addFields.map((field, index) => (
             <Flex key={field.id} direction="row" gap="0.6rem" align="flex-start">
               <FormInput<{ tokenA: string } & any>
                 inputProps={{
-                  id: `whitelistRemove.${index}.tokenA`,
+                  id: `whitelistAdd.${index}.tokenA`,
                   label: `Token A (EVM or HTS address)`,
                   type: "text",
                   placeholder: "e.g. 0xabc... or 0.0.123",
                   register: {
-                    ...register(`whitelistRemove.${index}.tokenA` as const, {
+                    ...register(`whitelistAdd.${index}.tokenA` as const, {
                       required: { value: true, message: "Required" },
                       validate: async (v) => validateAddress(v),
                     }),
                   },
                 }}
-                isInvalid={Boolean((errors as any)?.whitelistRemove?.[index]?.tokenA)}
-                errorMessage={(errors as any)?.whitelistRemove?.[index]?.tokenA?.message as string}
+                isInvalid={Boolean((errors as any)?.whitelistAdd?.[index]?.tokenA)}
+                errorMessage={(errors as any)?.whitelistAdd?.[index]?.tokenA?.message as string}
               />
               <FormInput<{ tokenB: string } & any>
                 inputProps={{
-                  id: `whitelistRemove.${index}.tokenB`,
+                  id: `whitelistAdd.${index}.tokenB`,
                   label: `Token B (EVM or HTS address)`,
                   type: "text",
                   placeholder: "e.g. 0xdef... or 0.0.456",
                   register: {
-                    ...register(`whitelistRemove.${index}.tokenB` as const, {
+                    ...register(`whitelistAdd.${index}.tokenB` as const, {
                       required: { value: true, message: "Required" },
-                      validate: async (v) => validateAddress(v),
+                      validate: async (v) => {
+                        const basic = await validateAddress(v);
+                        if (basic !== true) return basic;
+                        try {
+                          const tokenAInput = getValues(`whitelistAdd.${index}.tokenA` as const) as string;
+                          const na = normalizeToSolidityAddressLower(tokenAInput || "");
+                          const nb = normalizeToSolidityAddressLower(v || "");
+                          if (!na || !nb) return true;
+                          const exists = currentPairs.some((p) => {
+                            const pa = normalizeToSolidityAddressLower(p.tokenA);
+                            const pb = normalizeToSolidityAddressLower(p.tokenB);
+                            return (pa === na && pb === nb) || (pa === nb && pb === na);
+                          });
+                          if (exists) {
+                            return "This pair already exists in current values (A-B or B-A).";
+                          }
+                        } catch {
+                          // ignore
+                        }
+                        return true;
+                      },
                     }),
                   },
                 }}
-                isInvalid={Boolean((errors as any)?.whitelistRemove?.[index]?.tokenB)}
-                errorMessage={(errors as any)?.whitelistRemove?.[index]?.tokenB?.message as string}
+                isInvalid={Boolean((errors as any)?.whitelistAdd?.[index]?.tokenB)}
+                errorMessage={(errors as any)?.whitelistAdd?.[index]?.tokenB?.message as string}
               />
             </Flex>
           ))}

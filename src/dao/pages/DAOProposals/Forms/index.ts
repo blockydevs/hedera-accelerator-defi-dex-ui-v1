@@ -1,7 +1,6 @@
 export * from "./DAOProposalTypeForm";
 export * from "./DAOTextProposalDetailsForm";
 export * from "./DAOTextProposalReviewForm";
-export * from "./DAOTokenTransferDetailsForm";
 export * from "./DAOTokenTransferReviewForm";
 export * from "./DAOAddMemberDetailsForm";
 export * from "./DAOAddMemberReviewForm";
@@ -17,9 +16,9 @@ export * from "./DAOTokenAssociateDetailsForm";
 export * from "./DAOTokenAssociateReviewForm";
 export * from "./DAOGenericProposal";
 
-export * from "./DAOHuffyDetailsForm";
-export * from "./DAOHuffyRiskParamsDetailsForm";
-export * from "./DAOHuffyAddTradingPairForm";
-export * from "./DAOHuffyRemoveTradingPairForm";
-export * from "./DAOHuffyRiskParamsReviewForm";
-export * from "./DAOHuffyTraidingPairReviewForm";
+export * from "dao/pages/DAOProposals/Forms/DAODetailsForm";
+export * from "dao/pages/DAOProposals/Forms/DAORiskParamsDetailsForm";
+export * from "dao/pages/DAOProposals/Forms/DAOAddTradingPairForm";
+export * from "dao/pages/DAOProposals/Forms/DAORemoveTradingPairForm";
+export * from "dao/pages/DAOProposals/Forms/DAORiskParamsReviewForm";
+export * from "dao/pages/DAOProposals/Forms/DAOTradingPairReviewForm";

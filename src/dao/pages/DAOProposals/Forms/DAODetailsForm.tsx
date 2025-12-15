@@ -4,7 +4,7 @@ import { useFormContext } from "react-hook-form";
 import { CreateDAODexSettingsForm } from "../types";
 import { isValidUrl } from "@dex/utils";
 
-export function DAOHuffyDetailsForm() {
+export function DAODetailsForm() {
   const {
     register,
     formState: { errors },

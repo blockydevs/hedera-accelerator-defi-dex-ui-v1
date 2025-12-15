@@ -15,19 +15,6 @@ export enum DAOQueries {
 }
 
 export enum DAOMutations {
-  CreateDAO = "CreateDAO",
-  CreateMultiSigProposal = "CreateMultiSigProposal",
-  CreateTokenTransferProposal = "CreateTokenTransferProposal",
-  CreateTokenAssociateProposal = "CreateTokenAssociateProposal",
-  CreateGOVTokenAssociateProposal = "CreateGOVTokenAssociateProposal",
-  CreateDAOUpgradeProposal = "CreateDAOUpgradeProposal",
-  CreateDAOTextProposal = "CreateDAOTextProposal",
-  CreateMultiSigDAOTextProposal = "CreateMultiSigDAOTextProposal",
-  CreateAddMemberProposal = "CreateAddMemberProposal",
-  CreateDeleteMemberProposal = "CreateDeleteMemberProposal",
-  CreateReplaceMemberProposal = "CreateReplaceMemberProposal",
-  CreateChangeThresholdProposal = "CreateChangeThresholdProposal",
-  CreateMultiSigDAOUpgradeProposal = "CreateMultiSigDAOUpgradeProposal",
   ApproveProposal = "ApproveProposal",
   ExecuteProposal = "ExecuteProposal",
   UpdateDAODetails = "UpdateDAODetails",
@@ -38,9 +25,9 @@ export enum DAOMutations {
   UnlockNFTToken = "unlockNFTToken",
   PinToIPFS = "PinToIPFS",
   TransferOwnership = "TransferOwnership",
-  CreateHuffyRiskParametersProposal = "CreateHuffyRiskParametersProposal",
-  CreateHuffyRemoveTradingPairProposal = "CreateHuffyRemoveTradingPairProposal",
-  CreateHuffyAddTradingPairProposal = "CreateHuffyAddTradingPairProposal",
+  CreateRiskParametersProposal = "CreateRiskParametersProposal",
+  CreateRemoveTradingPairProposal = "CreateRemoveTradingPairProposal",
+  CreateAddTradingPairProposal = "CreateAddTradingPairProposal",
 }
 
 export enum ProposalStatus {
@@ -57,24 +44,12 @@ export enum ProposalEvent {
   SafeCreated = "Safe Created",
 }
 
-export enum GovernanceEvent {
-  NFTSerialIdBlockStatus = "NFTSerialIdBlockStatus",
-  GovernorBalance = "GovernorBalance",
-}
-
 export enum ProposalType {
   TokenTransfer = "Token Transfer",
-  AddNewMember = "Add Member",
-  RemoveMember = "Remove Member",
-  ReplaceMember = "Replace Member",
-  ChangeThreshold = "Upgrade Threshold",
-  TokenAssociate = "Token Associate",
   UpgradeContract = "Upgrade Contract",
-  TextProposal = "Text Proposal",
-  GenericProposal = "Generic Proposal",
   RiskParametersProposal = "Risk Parameters",
-  AddTraidingPairProposal = "Add Traiding Pair",
-  RemoveTraidingPairProposal = "Remove Traiding Pair",
+  AddTradingPairProposal = "Add Trading Pair",
+  RemoveTradingPairProposal = "Remove Trading Pair",
 }
 
 export interface Votes {
@@ -87,18 +62,18 @@ export interface Votes {
   turnout: number | undefined;
 }
 
-export interface GOVHuffyRiskParametersProposalDetails {
+export interface GOVRiskParametersProposalDetails {
   maxTradeBps: number;
   maxSlippageBps: number;
   tradeCooldownSec: number;
 }
 
-export interface GOVHuffyTraidingPairProposalDetails {
+export interface GOVTradingPairProposalDetails {
   tokenIn: string;
   tokenOut: string;
 }
 
-export type ProposalData = GOVHuffyTraidingPairProposalDetails | GOVHuffyRiskParametersProposalDetails;
+export type ProposalData = GOVTradingPairProposalDetails | GOVRiskParametersProposalDetails;
 
 export interface Proposal {
   id: number;
@@ -158,10 +133,7 @@ export const AllFilters = [
   ProposalStatus.Pending,
   ProposalStatus.Queued,
 ];
-export interface BlockedNFTEvent {
-  nftSerialId: number;
-  isBlocked: boolean;
-}
+
 export interface UpdateAmountEventData {
   user: string;
   idOrAmount: number;

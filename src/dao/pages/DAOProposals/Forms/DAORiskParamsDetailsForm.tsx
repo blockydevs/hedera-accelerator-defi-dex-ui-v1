@@ -60,13 +60,13 @@ function useParamStoreValues() {
     run();
     return () => {
       ignore = true;
-    };
+    }; // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cfg?.contractId, JSON.stringify(cfg?.abi), JSON.stringify(cfg?.methods)]);
 
   return { loading, error, values };
 }
 
-export function DAOHuffyRiskParamsDetailsForm() {
+export function DAORiskParamsDetailsForm() {
   const {
     register,
     formState: { errors },

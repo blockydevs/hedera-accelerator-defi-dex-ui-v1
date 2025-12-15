@@ -5,7 +5,7 @@ import { HandleOnSuccess, useDexContext } from "@dex/hooks";
 import DAOService from "@dao/services";
 import { isNil } from "ramda";
 
-export interface UseCreateHuffyRemoveTradingPairProposalParams {
+export interface UseCreateRemoveTradingPairProposalParams {
   governorContractId: string;
   title: string;
   description: string;
@@ -15,7 +15,7 @@ export interface UseCreateHuffyRemoveTradingPairProposalParams {
   value?: number;
 }
 
-export function useCreateHuffyRemoveTradingPairProposal(handleOnSuccess: HandleOnSuccess) {
+export function useCreateRemoveTradingPairProposal(handleOnSuccess: HandleOnSuccess) {
   const queryClient = useQueryClient();
   const { wallet } = useDexContext(({ wallet }) => ({ wallet }));
   const signer = wallet.getSigner();
@@ -23,11 +23,11 @@ export function useCreateHuffyRemoveTradingPairProposal(handleOnSuccess: HandleO
   return useMutation<
     TransactionResponse | undefined,
     Error,
-    UseCreateHuffyRemoveTradingPairProposalParams,
-    DAOMutations.CreateHuffyRemoveTradingPairProposal
+    UseCreateRemoveTradingPairProposalParams,
+    DAOMutations.CreateRemoveTradingPairProposal
   >(
-    async (params: UseCreateHuffyRemoveTradingPairProposalParams) => {
-      return await DAOService.sendHuffyRemoveTradingPairProposal({ ...params, signer });
+    async (params: UseCreateRemoveTradingPairProposalParams) => {
+      return await DAOService.sendRemoveTradingPairProposal({ ...params, signer });
     },
     {
       onSuccess: (transactionResponse: TransactionResponse | undefined) => {

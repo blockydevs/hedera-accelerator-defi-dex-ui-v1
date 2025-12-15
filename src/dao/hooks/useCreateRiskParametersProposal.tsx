@@ -5,7 +5,7 @@ import { HandleOnSuccess, useDexContext } from "@dex/hooks";
 import DAOService from "@dao/services";
 import { isNil } from "ramda";
 
-export interface UseCreateHuffyRiskParametersProposalParams {
+export interface UseCreateRiskParametersProposalParams {
   governanceTokenId: string;
   governorContractId: string;
   title: string;
@@ -17,7 +17,7 @@ export interface UseCreateHuffyRiskParametersProposalParams {
   daoType: string;
 }
 
-export function useCreateHuffyRiskParametersProposal(handleOnSuccess: HandleOnSuccess) {
+export function useCreateRiskParametersProposal(handleOnSuccess: HandleOnSuccess) {
   const queryClient = useQueryClient();
   const { wallet } = useDexContext(({ wallet }) => ({ wallet }));
   const signer = wallet.getSigner();
@@ -25,11 +25,11 @@ export function useCreateHuffyRiskParametersProposal(handleOnSuccess: HandleOnSu
   return useMutation<
     TransactionResponse | undefined,
     Error,
-    UseCreateHuffyRiskParametersProposalParams,
-    DAOMutations.CreateHuffyRiskParametersProposal
+    UseCreateRiskParametersProposalParams,
+    DAOMutations.CreateRiskParametersProposal
   >(
-    async (params: UseCreateHuffyRiskParametersProposalParams) => {
-      return await DAOService.sendHuffyRiskParametersProposal({ ...params, signer });
+    async (params: UseCreateRiskParametersProposalParams) => {
+      return await DAOService.sendRiskParametersProposal({ ...params, signer });
     },
     {
       onSuccess: (transactionResponse: TransactionResponse | undefined) => {

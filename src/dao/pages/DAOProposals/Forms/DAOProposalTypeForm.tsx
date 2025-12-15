@@ -3,19 +3,19 @@ import { CreateDAOProposalForm, DAOProposalType } from "../types";
 import { Text, Color, RadioCard, SettingsToolIcon } from "@shared/ui-kit";
 import { useFormContext } from "react-hook-form";
 
-const HuffyProposals = [
+const Proposals = [
   {
-    title: DAOProposalType.HuffyRiskParametersProposal,
+    title: DAOProposalType.RiskParametersProposal,
     label: "Set risk parameters (Max trade size, Max allowed slippage, Minimum seconds between trades).",
     icon: <SettingsToolIcon boxSize="4" color={Color.Grey_Blue._500} marginTop="0.2rem" />,
   },
   {
-    title: DAOProposalType.HuffyAddTradingPairProposal,
+    title: DAOProposalType.AddTradingPairProposal,
     label: "Add a trading pair (Provide the address of the input/output token).",
     icon: <SettingsToolIcon boxSize="4" color={Color.Grey_Blue._500} marginTop="0.2rem" />,
   },
   {
-    title: DAOProposalType.HuffyRemoveTradingPairProposal,
+    title: DAOProposalType.RemoveTradingPairProposal,
     label: "Remove a trading pair (Provide the address of the input/output token).",
     icon: <SettingsToolIcon boxSize="4" color={Color.Grey_Blue._500} marginTop="0.2rem" />,
   },
@@ -36,7 +36,7 @@ export function DAOProposalTypeForm() {
   }
 
   function getProposalsArray() {
-    return HuffyProposals;
+    return Proposals;
   }
 
   return (
