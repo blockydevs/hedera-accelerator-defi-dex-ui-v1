@@ -18,9 +18,9 @@ import { ethers } from "ethers";
 import { SINGLE_DAO_DEX_SETTINGS, SINGLE_DAO_ID } from "@dao/config/singleDao";
 import { ContractId, TokenId } from "@hashgraph/sdk";
 import { DexService } from "@dex/services";
-import { useCreateHuffyRiskParametersProposal } from "@dao/hooks/useCreateHuffyRiskParametersProposal";
-import { useCreateHuffyAddTradingPairProposal } from "@dao/hooks/useCreateHuffyAddTradingPairProposal";
-import { useCreateHuffyRemoveTradingPairProposal } from "@dao/hooks/useCreateHuffyRemoveTradingPairProposal";
+import { useCreateRiskParametersProposal } from "@dao/hooks/useCreateRiskParametersProposal";
+import { useCreateAddTradingPairProposal } from "@dao/hooks/useCreateAddTradingPairProposal";
+import { useCreateRemoveTradingPairProposal } from "@dao/hooks/useCreateRemoveTradingPairProposal";
 
 export function CreateDAOProposal() {
   const daoAccountId = SINGLE_DAO_ID;
@@ -97,68 +97,67 @@ export function CreateDAOProposal() {
   );
   const { data: tokenBalances } = accountTokenBalancesQueryResults;
 
-  const sendHuffyRiskParametersProposalResults = useCreateHuffyRiskParametersProposal(handleCreateDAOProposalSuccess);
+  const sendRiskParametersProposalResults = useCreateRiskParametersProposal(handleCreateDAOProposalSuccess);
   const {
-    isLoading: isCreateHuffyRiskParametersProposalLoading,
-    isError: isCreateHuffyRiskParametersProposalFailed,
-    error: isCreateHuffyRiskParametersProposalError,
-    mutate: createHuffyRiskParametersProposal,
-    reset: resetCreateHuffyRiskParametersProposal,
-  } = sendHuffyRiskParametersProposalResults;
+    isLoading: isCreateRiskParametersProposalLoading,
+    isError: isCreateRiskParametersProposalFailed,
+    error: isCreateRiskParametersProposalError,
+    mutate: createRiskParametersProposal,
+    reset: resetCreateRiskParametersProposal,
+  } = sendRiskParametersProposalResults;
 
-  const sendHuffyAddTradingPairProposalResults = useCreateHuffyAddTradingPairProposal(handleCreateDAOProposalSuccess);
+  const sendAddTradingPairProposalResults = useCreateAddTradingPairProposal(handleCreateDAOProposalSuccess);
   const {
-    isLoading: isCreateHuffyAddTradingPairProposalLoading,
-    isError: isCreateHuffyAddTradingPairProposalFailed,
-    error: isCreateHuffyAddTradingPairProposalError,
-    mutate: createHuffyAddTradingPairProposal,
-    reset: resetCreateHuffyAddTradingPairProposal,
-  } = sendHuffyAddTradingPairProposalResults;
+    isLoading: isCreateAddTradingPairProposalLoading,
+    isError: isCreateAddTradingPairProposalFailed,
+    error: isCreateAddTradingPairProposalError,
+    mutate: createAddTradingPairProposal,
+    reset: resetCreateAddTradingPairProposal,
+  } = sendAddTradingPairProposalResults;
 
-  const sendHuffyRemoveTradingPairProposalResults =
-    useCreateHuffyRemoveTradingPairProposal(handleCreateDAOProposalSuccess);
+  const sendRemoveTradingPairProposalResults = useCreateRemoveTradingPairProposal(handleCreateDAOProposalSuccess);
   const {
-    isLoading: isCreateHuffyRemoveTradingPairProposalLoading,
-    isError: isCreateHuffyRemoveTradingPairProposalFailed,
-    error: isCreateHuffyRemoveTradingPairProposalError,
-    mutate: createHuffyRemoveTradingPairProposal,
-    reset: resetCreateHuffyRemoveTradingPairProposal,
-  } = sendHuffyRemoveTradingPairProposalResults;
+    isLoading: isCreateRemoveTradingPairProposalLoading,
+    isError: isCreateRemoveTradingPairProposalFailed,
+    error: isCreateRemoveTradingPairProposalError,
+    mutate: createRemoveTradingPairProposal,
+    reset: resetCreateRemoveTradingPairProposal,
+  } = sendRemoveTradingPairProposalResults;
 
   const isLoading =
     isPinningToIPFSLoading ||
-    isCreateHuffyRiskParametersProposalLoading ||
-    isCreateHuffyAddTradingPairProposalLoading ||
-    isCreateHuffyRemoveTradingPairProposalLoading;
+    isCreateRiskParametersProposalLoading ||
+    isCreateAddTradingPairProposalLoading ||
+    isCreateRemoveTradingPairProposalLoading;
 
   const isError =
     isPinningToIPFSFailed ||
-    isCreateHuffyRiskParametersProposalFailed ||
-    isCreateHuffyAddTradingPairProposalFailed ||
-    isCreateHuffyRemoveTradingPairProposalFailed;
+    isCreateRiskParametersProposalFailed ||
+    isCreateAddTradingPairProposalFailed ||
+    isCreateRemoveTradingPairProposalFailed;
 
   function getDetailsRoute() {
-    return `/${Routes.CreateDAOProposal}/${Routes.DAOHuffyDetails}`;
+    return `/${Routes.CreateDAOProposal}/${Routes.DAOKairosDetails}`;
   }
   function getRiskParamsRoute() {
-    return `/${Routes.CreateDAOProposal}/${Routes.DAOHuffyRiskParamsDetails}`;
+    return `/${Routes.CreateDAOProposal}/${Routes.DAORiskParamsDetails}`;
   }
   function getAddTradingPairRoute() {
-    return `/${Routes.CreateDAOProposal}/${Routes.DAOHuffyAddTradingPairDetails}`;
+    return `/${Routes.CreateDAOProposal}/${Routes.DAOAddTradingPairDetails}`;
   }
   function getRemoveTradingPairRoute() {
-    return `/${Routes.CreateDAOProposal}/${Routes.DAOHuffyRemoveTradingPairDetails}`;
+    return `/${Routes.CreateDAOProposal}/${Routes.DAORemoveTradingPairDetails}`;
   }
   function getRiskParamsReviewRoute() {
-    return `/${Routes.CreateDAOProposal}/${Routes.DAOHuffyRiskParamsReview}`;
+    return `/${Routes.CreateDAOProposal}/${Routes.DAORiskParamsReview}`;
   }
   function getTradingPairReviewRoute() {
-    return `/${Routes.CreateDAOProposal}/${Routes.DAOHuffyTradingPairReview}`;
+    return `/${Routes.CreateDAOProposal}/${Routes.DAOTradingPairReview}`;
   }
 
   const steps = (() => {
     switch (type) {
-      case DAOProposalType.HuffyRiskParametersProposal:
+      case DAOProposalType.RiskParametersProposal:
         return [
           {
             label: "Type",
@@ -182,7 +181,7 @@ export function CreateDAOProposal() {
             isError,
           },
         ];
-      case DAOProposalType.HuffyAddTradingPairProposal:
+      case DAOProposalType.AddTradingPairProposal:
         return [
           {
             label: "Type",
@@ -206,7 +205,7 @@ export function CreateDAOProposal() {
             isError,
           },
         ];
-      case DAOProposalType.HuffyRemoveTradingPairProposal:
+      case DAOProposalType.RemoveTradingPairProposal:
         return [
           {
             label: "Type",
@@ -238,9 +237,9 @@ export function CreateDAOProposal() {
 
   function resetTransactions() {
     resetPinMetadataToIPFS();
-    resetCreateHuffyRiskParametersProposal();
-    resetCreateHuffyAddTradingPairProposal();
-    resetCreateHuffyRemoveTradingPairProposal();
+    resetCreateRiskParametersProposal();
+    resetCreateAddTradingPairProposal();
+    resetCreateRemoveTradingPairProposal();
   }
 
   function reset() {
@@ -250,9 +249,9 @@ export function CreateDAOProposal() {
 
   function GetFormErrorMessage(): string {
     if (isPinningToIPFSError) return isPinningToIPFSError.response?.data.error || isPinningToIPFSError.message;
-    if (isCreateHuffyRiskParametersProposalError) return isCreateHuffyRiskParametersProposalError.message;
-    if (isCreateHuffyAddTradingPairProposalError) return isCreateHuffyAddTradingPairProposalError.message;
-    if (isCreateHuffyRemoveTradingPairProposalError) return isCreateHuffyRemoveTradingPairProposalError.message;
+    if (isCreateRiskParametersProposalError) return isCreateRiskParametersProposalError.message;
+    if (isCreateAddTradingPairProposalError) return isCreateAddTradingPairProposalError.message;
+    if (isCreateRemoveTradingPairProposalError) return isCreateRemoveTradingPairProposalError.message;
     return "";
   }
 
@@ -271,7 +270,7 @@ export function CreateDAOProposal() {
 
   async function onSubmit(data: CreateDAOProposalForm) {
     switch (type) {
-      case DAOProposalType.HuffyRiskParametersProposal: {
+      case DAOProposalType.RiskParametersProposal: {
         const {
           title,
           description,
@@ -300,7 +299,7 @@ export function CreateDAOProposal() {
         const psInterface = new ethers.utils.Interface(psCfg.abi as any);
         const calldata = psInterface.encodeFunctionData("setParameters", [newMaxTrade, newMaxSlippage, newCooldown]);
 
-        return createHuffyRiskParametersProposal({
+        return createRiskParametersProposal({
           governanceTokenId,
           title,
           description,
@@ -313,7 +312,7 @@ export function CreateDAOProposal() {
         });
       }
 
-      case DAOProposalType.HuffyAddTradingPairProposal: {
+      case DAOProposalType.AddTradingPairProposal: {
         const { title, description, linkToDiscussion = "", whitelistAdd } = data as CreateDAODexSettingsForm;
 
         const pwCfg = SINGLE_DAO_DEX_SETTINGS?.pairWhitelist;
@@ -329,7 +328,7 @@ export function CreateDAOProposal() {
           const tokenAAddress = (ethers as any)?.utils?.isAddress?.(a) ? a : TokenId.fromString(a).toSolidityAddress();
           const tokenBAddress = (ethers as any)?.utils?.isAddress?.(b) ? b : TokenId.fromString(b).toSolidityAddress();
           const calldata = pwInterface.encodeFunctionData(addPairMethod!, [tokenAAddress, tokenBAddress]);
-          createHuffyAddTradingPairProposal({
+          createAddTradingPairProposal({
             governorContractId: daoGovernance,
             title,
             description,
@@ -341,7 +340,7 @@ export function CreateDAOProposal() {
         }
         return;
       }
-      case DAOProposalType.HuffyRemoveTradingPairProposal: {
+      case DAOProposalType.RemoveTradingPairProposal: {
         const { title, description, linkToDiscussion = "", whitelistRemove } = data as CreateDAODexSettingsForm;
 
         const pwCfg = SINGLE_DAO_DEX_SETTINGS?.pairWhitelist;
@@ -357,7 +356,7 @@ export function CreateDAOProposal() {
           const tokenAAddress = (ethers as any)?.utils?.isAddress?.(a) ? a : TokenId.fromString(a).toSolidityAddress();
           const tokenBAddress = (ethers as any)?.utils?.isAddress?.(b) ? b : TokenId.fromString(b).toSolidityAddress();
           const calldata = pwInterface.encodeFunctionData(removePairMethod!, [tokenAAddress, tokenBAddress]);
-          createHuffyRemoveTradingPairProposal({
+          createRemoveTradingPairProposal({
             governorContractId: daoGovernance,
             title,
             description,

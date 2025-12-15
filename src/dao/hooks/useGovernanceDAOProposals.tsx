@@ -142,10 +142,10 @@ export function useGovernanceDAOProposals(
         return ProposalType.RiskParametersProposal;
       }
       case GovernanceProposalType.AddTradingPairProposal: {
-        return ProposalType.AddTraidingPairProposal;
+        return ProposalType.AddTradingPairProposal;
       }
       case GovernanceProposalType.RemoveTradingPairProposal: {
-        return ProposalType.RemoveTraidingPairProposal;
+        return ProposalType.RemoveTradingPairProposal;
       }
       default: {
         return ProposalType.TokenTransfer;

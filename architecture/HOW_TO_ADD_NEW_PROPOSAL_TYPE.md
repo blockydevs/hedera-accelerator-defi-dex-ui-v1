@@ -5,7 +5,7 @@ This guide explains how to register a brand‑new proposal type so that:
 - It has its own details/configuration steps and submit flow.
 - It is correctly parsed from on‑chain data and visible in the proposals list and details page with its unique fields.
 
-The examples below reference current “Huffy” proposal types as working patterns you can copy.
+The examples below reference current “kairos” proposal types as working patterns you can copy.
 
 Terminology note:
 - DAOProposalType = UI/Wizard type selector for creating proposals (front-end only)
@@ -74,8 +74,8 @@ export interface GOVSetFeeProposalDetails {
 
 // 1c) Add it to the ProposalData union
 export type ProposalData =
-  | GOVHuffyTraidingPairProposalDetails
-  | GOVHuffyRiskParametersProposalDetails
+  | GOVTraidingPairProposalDetails
+  | GOVRiskParametersProposalDetails
   | GOVSetFeeProposalDetails; // NEW
 ```
 
@@ -102,10 +102,10 @@ export enum DAOProposalType {
 2b) Show it on the type selection screen
 
 File: src\dao\pages\DAOProposals\Forms\DAOProposalTypeForm.tsx
-- Add an entry to the HuffyProposals (or returned array from getProposalsArray()).
+- Add an entry to the Proposals (or returned array from getProposalsArray()).
 
 ```tsx
-const HuffyProposals = [
+const Proposals = [
   // ...existing
   {
     title: DAOProposalType.SetFeeProposal, // NEW
@@ -133,8 +133,8 @@ File: src\dao\routes\routes.ts
 ```ts
 export const Routes = {
   // ...existing
-  DAOSetFeeDetails: "huffy-settings/set-fee/details",    // NEW
-  DAOSetFeeReview:  "huffy-settings/set-fee/review",     // NEW
+  DAOSetFeeDetails: "kairos-settings/set-fee/details",    // NEW
+  DAOSetFeeReview:  "kairos-settings/set-fee/review",     // NEW
 };
 ```
 
@@ -153,25 +153,25 @@ Create two new components by following existing ones as templates:
 - src\dao\pages\DAOProposals\Forms\DAOSetFeeDetailsForm.tsx
 - src\dao\pages\DAOProposals\Forms\DAOSetFeeReviewForm.tsx
 
-Use the Huffy forms as references:
-- DAOHuffyDetailsForm.tsx (generic details: title, description, link)
-- DAOHuffyRiskParamsDetailsForm.tsx (configuration step)
-- DAOHuffyRiskParamsReviewForm.tsx (review + submit)
+Use the forms as references:
+- DAOHDetailsForm.tsx (generic details: title, description, link)
+- DAORiskParamsDetailsForm.tsx (configuration step)
+- DAORiskParamsReviewForm.tsx (review + submit)
 
-3c) Register your wizard steps and submit mutation
+3c) Register your wizard steps and submit a mutation
 
 File: src\dao\pages\DAOProposals\CreateDAOProposal.tsx
 - Add a case for your DAOProposalType in the steps switch to wire your routes.
 - Add a case in the submit section that calls the correct mutation/hook.
 
 Examples to copy from:
-- Steps: see cases for HuffyRiskParametersProposal / HuffyAddTradingPairProposal.
-- Submit: search for mutate calls: createHuffyRiskParametersProposal / createHuffyAddTradingPairProposal / createHuffyRemoveTradingPairProposal.
+- Steps: see cases for RiskParametersProposal / AddTradingPairProposal.
+- Submit: search for mutate calls: createRiskParametersProposal / createAddTradingPairProposal / createRemoveTradingPairProposal.
 
 If your proposal requires a new backend mutation, implement a hook similar to:
-- src\dao\hooks\useCreateHuffyRiskParametersProposal.ts
-- src\dao\hooks\useCreateHuffyAddTradingPairProposal.ts
-- src\dao\hooks\useCreateHuffyRemoveTradingPairProposal.ts
+- src\dao\hooks\useCreateRiskParametersProposal.ts
+- src\dao\hooks\useCreateAddTradingPairProposal.ts
+- src\dao\hooks\useCreateRemoveTradingPairProposal.ts
 
 Name it e.g. src\dao\hooks\useCreateSetFeeProposal.ts and integrate it in CreateDAOProposal.tsx like the existing ones (loading/error handling and reset on success).
 
@@ -276,7 +276,7 @@ Add a new visual block in:
 - src\dao\pages\ProposalDetailsPage\ProposalDetails.tsx and/or
 - src\dao\pages\ProposalDetailsPage\ProposalDetailsComponents\*
 
-Follow existing patterns for “Huffy” proposals to render custom fields when `proposal.type === ProposalType.YourNewType`.
+Follow existing patterns for proposals to render custom fields when `proposal.type === ProposalType.YourNewType`.
 
 ---
 
@@ -285,7 +285,7 @@ Follow existing patterns for “Huffy” proposals to render custom fields when 
 Create a new hook to perform the contract call.
 
 Example file to copy:
-- src\dao\hooks\useCreateHuffyRiskParametersProposal.ts
+- src\dao\hooks\useCreateRiskParametersProposal.ts
 
 Your new hook should:
 - Receive the form data (title, description, link, and your custom fields)

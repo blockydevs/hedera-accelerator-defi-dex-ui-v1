@@ -5,7 +5,7 @@ export enum DAOType {
   GovernanceToken = "Governance Token",
   MultiSig = "MultiSig",
   NFT = "NFT",
-  Huffy = "Huffy",
+  Kairos = "Kairos",
 }
 export interface DAOCreatedEventArgs {
   admin: string;

@@ -196,7 +196,7 @@ function getProposalData(type: GovernanceProposalType, data: string | undefined)
     };
   };
 
-  const getHuffyRiskParamsProposalDataFromHexData = (data: string | undefined) => {
+  const getRiskParamsProposalDataFromHexData = (data: string | undefined) => {
     if (isNil(data)) return;
 
     const contractInterface = new ethers.utils.Interface(ParameterStoreJSON.abi);
@@ -209,7 +209,7 @@ function getProposalData(type: GovernanceProposalType, data: string | undefined)
     };
   };
 
-  const getHuffyAddTraidingPairProposalDataFromHexData = (data: string | undefined) => {
+  const getAddTradingPairProposalDataFromHexData = (data: string | undefined) => {
     if (isNil(data)) return;
 
     const contractInterface = new ethers.utils.Interface(PairWhitelistJSON.abi);
@@ -221,7 +221,7 @@ function getProposalData(type: GovernanceProposalType, data: string | undefined)
     };
   };
 
-  const getHuffyRemoveTraidingPairProposalDataFromHexData = (data: string | undefined) => {
+  const getRemoveTradingPairProposalDataFromHexData = (data: string | undefined) => {
     if (isNil(data)) return;
 
     const contractInterface = new ethers.utils.Interface(PairWhitelistJSON.abi);
@@ -241,11 +241,11 @@ function getProposalData(type: GovernanceProposalType, data: string | undefined)
     case GovernanceProposalType.UPGRADE_PROXY:
       return getUpgradeContractProposalData(data);
     case GovernanceProposalType.RiskParametersProposal:
-      return getHuffyRiskParamsProposalDataFromHexData(data);
+      return getRiskParamsProposalDataFromHexData(data);
     case GovernanceProposalType.AddTradingPairProposal:
-      return getHuffyAddTraidingPairProposalDataFromHexData(data);
+      return getAddTradingPairProposalDataFromHexData(data);
     case GovernanceProposalType.RemoveTradingPairProposal:
-      return getHuffyRemoveTraidingPairProposalDataFromHexData(data);
+      return getRemoveTradingPairProposalDataFromHexData(data);
     default:
       return;
   }

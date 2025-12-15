@@ -5,13 +5,11 @@ import {
   useExecuteGovernanceProposal,
   useCancelProposal,
   useHandleTransactionSuccess,
-  useFetchLockedGovToken,
 } from "@dex/hooks";
 import {
   useDAOs,
   ProposalStatus,
   useGovernanceDAOProposals,
-  useFetchLockedNFTToken,
   useChangeAdmin,
   useFetchContract,
   DAOQueries,
@@ -52,8 +50,6 @@ export function useGovernanceProposalDetails(daoAccountId: string, proposalId: s
 
   const hasVoted = proposal?.hasVoted ?? false;
   const walletId = wallet?.savedPairingData?.accountIds[0] ?? "";
-  const fetchLockGODTokens = useFetchLockedGovToken(walletId, dao?.tokenHolderAddress ?? "");
-  const lockedNFTToken = useFetchLockedNFTToken(walletId, dao?.tokenHolderAddress ?? "");
 
   // eslint-disable-next-line max-len
   const snapshotVotingPowerQuery = useQuery<
@@ -81,10 +77,7 @@ export function useGovernanceProposalDetails(daoAccountId: string, proposalId: s
     }
   );
 
-  const votingPower =
-    dao?.type === DAOType.GovernanceToken
-      ? `${(snapshotVotingPowerQuery.data ?? 0).toFixed(4)}`
-      : `${(Number(lockedNFTToken.data) ? 1 : 0).toFixed(4)}`;
+  const votingPower = `${(snapshotVotingPowerQuery.data ?? 0).toFixed(4)}`;
   const areVoteButtonsVisible = !hasVoted && proposal?.status === ProposalStatus.Pending;
   const isAuthor = walletId === proposal?.author;
   const assetHolderContractId = useFetchContract(dao?.assetsHolderAddress ?? "").data?.data.contract_id;

@@ -2,7 +2,7 @@ import { useQuery } from "react-query";
 import { DexService, convertEthersBigNumberToBigNumberJS } from "@dex/services";
 import {
   DAOQueries,
-  GOVHuffyRiskParametersProposalDetails,
+  GOVRiskParametersProposalDetails,
   Proposal,
   ProposalEvent,
   ProposalStatus,
@@ -110,7 +110,7 @@ export function useDAOProposals(daoAccountId: string) {
                 maxTradeBps: proposalInfo.maxTradeBps,
                 maxSlippageBps: proposalInfo.maxSlippageBps,
                 tradeCooldownSec: proposalInfo.tradeCooldownSec,
-              } as GOVHuffyRiskParametersProposalDetails;
+              } as GOVRiskParametersProposalDetails;
               break;
             case GovernanceProposalType.AddTradingPairProposal:
             case GovernanceProposalType.RemoveTradingPairProposal:

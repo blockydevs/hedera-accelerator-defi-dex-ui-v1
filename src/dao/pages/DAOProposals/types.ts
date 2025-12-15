@@ -7,17 +7,13 @@ export enum DAOProposalType {
   TokenAssociate = "Token Associate",
   TokenTransfer = "Token Transfer",
   UpgradeThreshold = "Upgrade Threshold",
-  UpgradeVotingDuration = "Upgrade Voting Duration",
   AddMember = "Add Member",
   ReplaceMember = "Replace Member",
   RemoveMember = "Remove Member",
-  Message = "Message",
-  ContractUpgrade = "Upgrade DAO",
   Generic = "Generic",
-  DEXSettings = "DEX Settings",
-  HuffyRiskParametersProposal = "Set risk parameters",
-  HuffyAddTradingPairProposal = "Add a trading pair",
-  HuffyRemoveTradingPairProposal = "Remove a trading pair",
+  RiskParametersProposal = "Set risk parameters",
+  AddTradingPairProposal = "Add a trading pair",
+  RemoveTradingPairProposal = "Remove a trading pair",
 }
 
 export interface CreateDAOProposalFormBase {

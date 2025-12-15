@@ -76,9 +76,7 @@ export function DashboardHeader(props: DashboardHeaderProps) {
                 {govTokenId ? (
                   <HStack>
                     {/* eslint-disable-next-line max-len */}
-                    <Text.H6_Medium opacity="0.8">{`${
-                      token?.data.symbol === "GOD" ? "HUFFY" : token?.data.symbol
-                    } TOKEN ID:`}</Text.H6_Medium>
+                    <Text.H6_Medium opacity="0.8">{`${token?.data.symbol} TOKEN ID:`}</Text.H6_Medium>
                     <HashScanLink id={govTokenId} type={HashscanData.Token} />
                   </HStack>
                 ) : undefined}

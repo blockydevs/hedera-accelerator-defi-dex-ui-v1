@@ -7,18 +7,18 @@ import { DEFAULT_DAO_OVERVIEW_PATH } from "@dao/config/singleDao";
 
 export const router = createHashRouter(
   createRoutesFromElements(
-    <Route path={Routes.Home} element={<AppLayout navOptions={[]} brandText="HuffyDAO" />}>
+    <Route path={Routes.Home} element={<AppLayout navOptions={[]} brandText="KairosDAO" />}>
       <Route index element={<Navigate to={DEFAULT_DAO_OVERVIEW_PATH} />} />
       {
         <Route path={Routes.CreateDAOProposal} element={<Pages.CreateDAOProposal />}>
           <Route index element={<Navigate to={Routes.DAOProposalType} replace />} />
           <Route path={Routes.DAOProposalType} element={<Pages.DAOProposalTypeForm />} />
-          <Route path={Routes.DAOHuffyDetails} element={<Pages.DAOHuffyDetailsForm />} />
-          <Route path={Routes.DAOHuffyRiskParamsDetails} element={<Pages.DAOHuffyRiskParamsDetailsForm />} />
-          <Route path={Routes.DAOHuffyAddTradingPairDetails} element={<Pages.DAOHuffyAddTradingPairForm />} />
-          <Route path={Routes.DAOHuffyRemoveTradingPairDetails} element={<Pages.DAOHuffyRemoveTradingPairForm />} />
-          <Route path={Routes.DAOHuffyRiskParamsReview} element={<Pages.DAOHuffyRiskParamsReviewForm />} />
-          <Route path={Routes.DAOHuffyTradingPairReview} element={<Pages.DAOHuffyTraidingPairReviewForm />} />
+          <Route path={Routes.DAOKairosDetails} element={<Pages.DAODetailsForm />} />
+          <Route path={Routes.DAORiskParamsDetails} element={<Pages.DAORiskParamsDetailsForm />} />
+          <Route path={Routes.DAOAddTradingPairDetails} element={<Pages.DAOAddTradingPairForm />} />
+          <Route path={Routes.DAORemoveTradingPairDetails} element={<Pages.DAORemoveTradingPairForm />} />
+          <Route path={Routes.DAORiskParamsReview} element={<Pages.DAORiskParamsReviewForm />} />
+          <Route path={Routes.DAOTradingPairReview} element={<Pages.DAOTradingPairReviewForm />} />
         </Route>
       }
       {<Route path={`${Routes.Proposals}/:transactionHash`} element={<Pages.GovernanceProposalDetailsPage />} />}

@@ -43,7 +43,7 @@ export const GOVTokenDetails = (props: GOVTokenDetailsProps) => {
         labelTextStyle="p xsmall medium"
         labelLeftIcon={<LockIcon />}
         labelOpacity="1.0"
-        value={lockedGODToken}
+        value={lockedGODToken ?? "-"}
         valueStyle="p medium medium"
         valueTextColor={Color.Grey_Blue._700}
         valueUnitSymbol={tokenSymbol}

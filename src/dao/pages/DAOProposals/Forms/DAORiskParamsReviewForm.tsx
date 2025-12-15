@@ -59,13 +59,13 @@ function useParamStoreValues() {
     run();
     return () => {
       ignore = true;
-    };
+    }; // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cfg?.contractId, JSON.stringify(cfg?.abi), JSON.stringify(cfg?.methods)]);
 
   return { loading, error, values };
 }
 
-export function DAOHuffyRiskParamsReviewForm() {
+export function DAORiskParamsReviewForm() {
   const { getValues } = useFormContext<CreateDAODexSettingsForm>();
   const formValues = getValues();
   const { values: currentParams, loading: paramsLoading, error: paramsError } = useParamStoreValues();

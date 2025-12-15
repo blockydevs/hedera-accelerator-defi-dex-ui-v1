@@ -5,7 +5,7 @@ import { HandleOnSuccess, useDexContext } from "@dex/hooks";
 import DAOService from "@dao/services";
 import { isNil } from "ramda";
 
-export interface UseCreateHuffyAddTradingPairProposalParams {
+export interface UseCreateAddTradingPairProposalParams {
   governorContractId: string;
   title: string;
   description: string;
@@ -15,7 +15,7 @@ export interface UseCreateHuffyAddTradingPairProposalParams {
   value?: number;
 }
 
-export function useCreateHuffyAddTradingPairProposal(handleOnSuccess: HandleOnSuccess) {
+export function useCreateAddTradingPairProposal(handleOnSuccess: HandleOnSuccess) {
   const queryClient = useQueryClient();
   const { wallet } = useDexContext(({ wallet }) => ({ wallet }));
   const signer = wallet.getSigner();
@@ -23,11 +23,11 @@ export function useCreateHuffyAddTradingPairProposal(handleOnSuccess: HandleOnSu
   return useMutation<
     TransactionResponse | undefined,
     Error,
-    UseCreateHuffyAddTradingPairProposalParams,
-    DAOMutations.CreateHuffyAddTradingPairProposal
+    UseCreateAddTradingPairProposalParams,
+    DAOMutations.CreateAddTradingPairProposal
   >(
-    async (params: UseCreateHuffyAddTradingPairProposalParams) => {
-      return await DAOService.sendHuffyAddTradingPairProposal({ ...params, signer });
+    async (params: UseCreateAddTradingPairProposalParams) => {
+      return await DAOService.sendAddTradingPairProposal({ ...params, signer });
     },
     {
       onSuccess: (transactionResponse: TransactionResponse | undefined) => {

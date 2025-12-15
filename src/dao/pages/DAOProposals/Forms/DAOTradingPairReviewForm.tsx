@@ -71,7 +71,7 @@ function useCurrentPairs() {
   return { loading, error, pairs };
 }
 
-export function DAOHuffyTraidingPairReviewForm() {
+export function DAOTradingPairReviewForm() {
   const { getValues } = useFormContext<CreateDAODexSettingsForm>();
   const formValues = getValues();
   const { pairs: currentPairs, loading: pairsLoading, error: pairsError } = useCurrentPairs();
@@ -129,7 +129,7 @@ export function DAOHuffyTraidingPairReviewForm() {
 
     return () => {
       ignore = true;
-    };
+    }; // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(currentPairs), JSON.stringify(additions), JSON.stringify(removals)]);
 
   const renderLabel = (value: string) => {
