@@ -11,6 +11,7 @@ import { Routes } from "@dao/routes";
 import { useGovernanceProposalDetails } from "./useGovernanceProposalDetails";
 // eslint-disable-next-line max-len
 import { GovernanceProposalConfirmationDetails } from "@dao/pages/ProposalDetailsPage/GovernanceProposalConfirmationDetails";
+import { ProposalBox } from "./ProposalDetailsComponents/ProposalBox";
 
 export function GovernanceProposalDetailsPage() {
   const navigate = useNavigate();
@@ -89,9 +90,10 @@ export function GovernanceProposalDetailsPage() {
             .join(", ")
         : "";
 
-    const descriptionArray = [description, subDescription, str].filter(
-      (s): s is string => typeof s === "string" && s.trim().length > 0
-    );
+    const descriptionArray = [description].filter((s): s is string => typeof s === "string" && s.trim().length > 0);
+
+    const proposalBoxLines =
+      (subDescription && subDescription.split("\n").filter((l) => l.trim().length > 0)) || (str ? [str] : []);
 
     return (
       <Grid layerStyle="proposal-details__page" templateColumns="repeat(4, 1fr)">
@@ -103,6 +105,7 @@ export function GovernanceProposalDetailsPage() {
               isExecutionProcessing={isProposalBeingExecuted}
               hasExecutionFailed={hasProposalExecutionFailed}
             />
+            {proposalBoxLines.length > 0 && <ProposalBox lines={proposalBoxLines} />}
             <ProposalDetails
               description={descriptionArray}
               metadata={metadata}
