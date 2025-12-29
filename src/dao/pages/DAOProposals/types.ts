@@ -1,6 +1,6 @@
 import { TokenBalance } from "@dex/hooks";
 import { UploadedFile } from "@shared/ui-kit";
-import { AbiInternalType, AbiParameter } from "abitype";
+import { AbiInternalType } from "abitype";
 
 export enum DAOProposalType {
   Text = "Text",
@@ -14,6 +14,7 @@ export enum DAOProposalType {
   RiskParametersProposal = "Set risk parameters",
   AddTradingPairProposal = "Add a trading pair",
   RemoveTradingPairProposal = "Remove a trading pair",
+  BuybackAndBurnProposal = "Buy back and burn",
 }
 
 export interface CreateDAOProposalFormBase {
@@ -84,14 +85,6 @@ type BaseArgumentFields = {
   transformedValue: any | undefined;
 };
 
-export type AbiTupleParameter = {
-  type: "tuple" | `tuple[${string}]`;
-  name?: string | undefined;
-  internalType?: AbiInternalType | undefined;
-  inputValue: string;
-  components: readonly AbiParameter[];
-};
-
 export interface CreateDAOGenericProposalForm extends CreateDAOProposalFormBase {
   linkToDiscussion: string;
   targetContractId: string;
@@ -101,17 +94,28 @@ export interface CreateDAOGenericProposalForm extends CreateDAOProposalFormBase 
   encodedFunctionData: string;
 }
 
-export interface DexWhitelistPairInput {
+export interface WhitelistPairInput {
   tokenA: string;
   tokenB: string;
+}
+
+export interface BuybackAndBurnInput {
+  tokenIn: string;
+  pathToQuote: string;
+  amountIn: string;
+  minQuoteOut: string;
+  minAmountOut: string;
+  maxHtkPriceD18: string;
+  deadline: string;
 }
 
 export interface CreateDAODexSettingsForm extends CreateDAOProposalFormBase {
   maxTradeBps: number | undefined;
   maxSlippageBps: number | undefined;
   tradeCooldownSec: number | undefined;
-  whitelistAdd: DexWhitelistPairInput[];
-  whitelistRemove: DexWhitelistPairInput[];
+  whitelistAdd: WhitelistPairInput[];
+  whitelistRemove: WhitelistPairInput[];
+  buybackAndBurnData: BuybackAndBurnInput;
   linkToDiscussion?: string;
 }
 
@@ -124,14 +128,3 @@ export type CreateDAOProposalForm =
   | CreateDAOTokenAssociateForm
   | CreateDAOGenericProposalForm
   | CreateDAODexSettingsForm;
-
-export type CreateDAOProposalContext = {
-  daoType: string;
-  daoAccountId: string;
-  safeAccountId: string;
-  threshold: number;
-  membersCount: number;
-  proposalType: DAOProposalType;
-  assets: TokenBalance[];
-  governanceTokenId: string;
-};

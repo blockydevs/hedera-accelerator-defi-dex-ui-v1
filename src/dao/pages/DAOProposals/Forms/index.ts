@@ -1,20 +1,4 @@
 export * from "./DAOProposalTypeForm";
-export * from "./DAOTextProposalDetailsForm";
-export * from "./DAOTextProposalReviewForm";
-export * from "./DAOTokenTransferReviewForm";
-export * from "./DAOAddMemberDetailsForm";
-export * from "./DAOAddMemberReviewForm";
-export * from "./DAODeleteMemberDetailsForm";
-export * from "./DAODeleteMemberReviewForm";
-export * from "./DAOReplaceMemberDetailsForm";
-export * from "./DAOReplaceMemberReviewForm";
-export * from "./DAOUpgradeThresholdDetailsForm";
-export * from "./DAOUpgradeThresholdReviewForm";
-export * from "./DAOContractUpgradeReviewForm";
-export * from "./DAOContractUpgradeDetailsForm";
-export * from "./DAOTokenAssociateDetailsForm";
-export * from "./DAOTokenAssociateReviewForm";
-export * from "./DAOGenericProposal";
 
 export * from "dao/pages/DAOProposals/Forms/DAODetailsForm";
 export * from "dao/pages/DAOProposals/Forms/DAORiskParamsDetailsForm";
@@ -22,3 +6,5 @@ export * from "dao/pages/DAOProposals/Forms/DAOAddTradingPairForm";
 export * from "dao/pages/DAOProposals/Forms/DAORemoveTradingPairForm";
 export * from "dao/pages/DAOProposals/Forms/DAORiskParamsReviewForm";
 export * from "dao/pages/DAOProposals/Forms/DAOTradingPairReviewForm";
+export * from "dao/pages/DAOProposals/Forms/DAOBuybackAndBurnForm";
+export * from "dao/pages/DAOProposals/Forms/DAOBuybackAndBurnReviewForm";

@@ -1,6 +1,6 @@
-import { Flex, useRadioGroup, Box } from "@chakra-ui/react";
+import { Box, Flex, useRadioGroup } from "@chakra-ui/react";
 import { CreateDAOProposalForm, DAOProposalType } from "../types";
-import { Text, Color, RadioCard, SettingsToolIcon } from "@shared/ui-kit";
+import { Color, RadioCard, SettingsToolIcon, Text } from "@shared/ui-kit";
 import { useFormContext } from "react-hook-form";
 
 const Proposals = [
@@ -17,6 +17,11 @@ const Proposals = [
   {
     title: DAOProposalType.RemoveTradingPairProposal,
     label: "Remove a trading pair (Provide the address of the input/output token).",
+    icon: <SettingsToolIcon boxSize="4" color={Color.Grey_Blue._500} marginTop="0.2rem" />,
+  },
+  {
+    title: DAOProposalType.BuybackAndBurnProposal,
+    label: "Buy back and burn the KAI token",
     icon: <SettingsToolIcon boxSize="4" color={Color.Grey_Blue._500} marginTop="0.2rem" />,
   },
 ];

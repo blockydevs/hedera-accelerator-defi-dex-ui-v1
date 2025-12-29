@@ -4,10 +4,8 @@ import { MirrorNodeTokenById, ProposalCoreInformation } from "@dex/services";
 export enum DAOQueries {
   DAOs = "daos",
   Proposals = "proposals",
-  GodTokens = "godTokens",
   FetchLockNFTToken = "fetchLockNFTToken",
   FetchCanUnlockNFTToken = "fetchCanUnlockNFTToken",
-  FetchBlockedTokenBalance = "fetchBlockedTokenBalance",
   FetchDAOMembers = "fetchDAOMembers",
   Contract = "contract",
   Config = "Config",
@@ -28,6 +26,7 @@ export enum DAOMutations {
   CreateRiskParametersProposal = "CreateRiskParametersProposal",
   CreateRemoveTradingPairProposal = "CreateRemoveTradingPairProposal",
   CreateAddTradingPairProposal = "CreateAddTradingPairProposal",
+  CreateBuybackAndBurnProposal = "CreateBuybackAndBurnProposal",
 }
 
 export enum ProposalStatus {

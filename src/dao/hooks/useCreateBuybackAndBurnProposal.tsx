@@ -5,7 +5,7 @@ import { HandleOnSuccess, useDexContext } from "@dex/hooks";
 import DAOService from "@dao/services";
 import { isNil } from "ramda";
 
-export interface UseCreateAddTradingPairProposalParams {
+export interface UseCreateBuybackAndBurnProposalParams {
   governorContractId: string;
   title: string;
   description: string;
@@ -18,7 +18,7 @@ export interface UseCreateAddTradingPairProposalParams {
   daoType?: string;
 }
 
-export function useCreateAddTradingPairProposal(handleOnSuccess: HandleOnSuccess) {
+export function useCreateBuybackAndBurnProposal(handleOnSuccess: HandleOnSuccess) {
   const queryClient = useQueryClient();
   const { wallet } = useDexContext(({ wallet }) => ({ wallet }));
   const signer = wallet.getSigner();
@@ -26,11 +26,11 @@ export function useCreateAddTradingPairProposal(handleOnSuccess: HandleOnSuccess
   return useMutation<
     TransactionResponse | undefined,
     Error,
-    UseCreateAddTradingPairProposalParams,
-    DAOMutations.CreateAddTradingPairProposal
+    UseCreateBuybackAndBurnProposalParams,
+    DAOMutations.CreateBuybackAndBurnProposal
   >(
-    async (params: UseCreateAddTradingPairProposalParams) => {
-      return await DAOService.sendAddTradingPairProposal({ ...params, signer });
+    async (params: UseCreateBuybackAndBurnProposalParams) => {
+      return await DAOService.sendBuybackAndBurnProposal({ ...params, signer });
     },
     {
       onSuccess: (transactionResponse: TransactionResponse | undefined) => {

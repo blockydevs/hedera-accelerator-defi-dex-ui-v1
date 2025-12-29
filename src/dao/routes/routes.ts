@@ -53,4 +53,6 @@ export const Routes = {
   DAORemoveTradingPairDetails: "kairos-settings/remove-trading-pair",
   DAORiskParamsReview: "kairos-settings/risk-params-review",
   DAOTradingPairReview: "kairos-settings/trading-pair-review",
+  DAOBuybackAndBurnDetails: "kairos-settings/buyback-and-burn",
+  DAOBuybackAndBurnReview: "kairos-settings/buyback-and-burn-review",
 };

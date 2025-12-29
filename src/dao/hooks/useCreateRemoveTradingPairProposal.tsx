@@ -13,6 +13,9 @@ export interface UseCreateRemoveTradingPairProposalParams {
   calldata: string;
   target: string;
   value?: number;
+  governanceTokenId?: string;
+  nftTokenSerialId?: number;
+  daoType?: string;
 }
 
 export function useCreateRemoveTradingPairProposal(handleOnSuccess: HandleOnSuccess) {

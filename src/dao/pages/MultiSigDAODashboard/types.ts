@@ -8,13 +8,6 @@ export type MultiSigDAODetailsContext = {
   totalAssetValue: number;
 };
 
-export const DefaultMultiSigDAODetails = {
-  accountId: "",
-  safeId: "",
-  ownerIds: [],
-  threshold: 0,
-};
-
 export enum DepositTokenModalTabs {
   Fungible = 0,
   NFT,
