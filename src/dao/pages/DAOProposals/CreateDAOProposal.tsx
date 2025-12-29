@@ -1,26 +1,25 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { CreateDAOProposalForm, DAOProposalType } from "./types";
 import type { CreateDAODexSettingsForm } from "./types";
+import { CreateDAOProposalForm, DAOProposalType } from "./types";
 import { ErrorLayout, LoadingSpinnerLayout, NotFound, Page } from "@dex/layouts";
 import { Routes } from "@dao/routes";
 import { useForm } from "react-hook-form";
-import { Wizard, Color, LoadingDialog } from "@shared/ui-kit";
+import { Color, LoadingDialog, Wizard } from "@shared/ui-kit";
 import { WarningIcon } from "@chakra-ui/icons";
 import { DAOType, GovernanceDAODetails, MultiSigDAODetails, NFTDAODetails } from "@dao/services";
-import { DEFAULT_NFT_TOKEN_SERIAL_ID } from "@dex/services";
+import { DEFAULT_NFT_TOKEN_SERIAL_ID, DexService } from "@dex/services";
 import { useDAOs, useFetchContract, usePinToIPFS } from "@dao/hooks";
-import { useHandleTransactionSuccess, useAccountTokenBalances } from "@dex/hooks";
+import { useAccountTokenBalances, useHandleTransactionSuccess } from "@dex/hooks";
 import { isNil } from "ramda";
-import { TransactionResponse } from "@hashgraph/sdk";
+import { ContractId, TokenId, TransactionResponse } from "@hashgraph/sdk";
 import { getLastPathInRoute } from "@dex/utils";
 import { Button, Flex } from "@chakra-ui/react";
 import { ethers } from "ethers";
 import { SINGLE_DAO_DEX_SETTINGS, SINGLE_DAO_ID } from "@dao/config/singleDao";
-import { ContractId, TokenId } from "@hashgraph/sdk";
-import { DexService } from "@dex/services";
 import { useCreateRiskParametersProposal } from "@dao/hooks/useCreateRiskParametersProposal";
 import { useCreateAddTradingPairProposal } from "@dao/hooks/useCreateAddTradingPairProposal";
 import { useCreateRemoveTradingPairProposal } from "@dao/hooks/useCreateRemoveTradingPairProposal";
+import { useCreateBuybackAndBurnProposal } from "@dao/hooks/useCreateBuybackAndBurnProposal";
 
 export function CreateDAOProposal() {
   const daoAccountId = SINGLE_DAO_ID;
@@ -48,6 +47,15 @@ export function CreateDAOProposal() {
       tradeCooldownSec: undefined,
       whitelistAdd: [],
       whitelistRemove: [],
+      buybackAndBurnData: {
+        tokenIn: "",
+        pathToQuote: "",
+        amountIn: "",
+        minQuoteOut: "",
+        minAmountOut: "",
+        maxHtkPriceD18: "",
+        deadline: "",
+      },
     },
   });
   const {
@@ -124,17 +132,28 @@ export function CreateDAOProposal() {
     reset: resetCreateRemoveTradingPairProposal,
   } = sendRemoveTradingPairProposalResults;
 
+  const sendBuybackAndBurnProposalResults = useCreateBuybackAndBurnProposal(handleCreateDAOProposalSuccess);
+  const {
+    isLoading: isCreateBuybackAndBurnProposalLoading,
+    isError: isCreateBuybackAndBurnProposalFailed,
+    error: isCreateBuybackAndBurnPorposalError,
+    mutate: createBuybackAndBurnProposal,
+    reset: resetCreateBuybackAndBurnProposal,
+  } = sendBuybackAndBurnProposalResults;
+
   const isLoading =
     isPinningToIPFSLoading ||
     isCreateRiskParametersProposalLoading ||
     isCreateAddTradingPairProposalLoading ||
-    isCreateRemoveTradingPairProposalLoading;
+    isCreateRemoveTradingPairProposalLoading ||
+    isCreateBuybackAndBurnProposalLoading;
 
   const isError =
     isPinningToIPFSFailed ||
     isCreateRiskParametersProposalFailed ||
     isCreateAddTradingPairProposalFailed ||
-    isCreateRemoveTradingPairProposalFailed;
+    isCreateRemoveTradingPairProposalFailed ||
+    isCreateBuybackAndBurnProposalFailed;
 
   function getDetailsRoute() {
     return `/${Routes.CreateDAOProposal}/${Routes.DAOKairosDetails}`;
@@ -153,6 +172,12 @@ export function CreateDAOProposal() {
   }
   function getTradingPairReviewRoute() {
     return `/${Routes.CreateDAOProposal}/${Routes.DAOTradingPairReview}`;
+  }
+  function getBuybackAndBurnRoute() {
+    return `/${Routes.CreateDAOProposal}/${Routes.DAOBuybackAndBurnDetails}`;
+  }
+  function getBuybackAndBurnReviewRoute() {
+    return `/${Routes.CreateDAOProposal}/${Routes.DAOBuybackAndBurnReview}`;
   }
 
   const steps = (() => {
@@ -229,7 +254,30 @@ export function CreateDAOProposal() {
             isError,
           },
         ];
-
+      case DAOProposalType.BuybackAndBurnProposal:
+        return [
+          {
+            label: "Type",
+            route: `/${Routes.CreateDAOProposal}/${Routes.DAOProposalType}`,
+            validate: async () => trigger(["type"]),
+          },
+          {
+            label: "Details",
+            route: getDetailsRoute(),
+            validate: async () => trigger(["title", "description", "linkToDiscussion"]),
+          },
+          {
+            label: "Configuration",
+            route: getBuybackAndBurnRoute(),
+            validate: async () => trigger(["buybackAndBurnData.tokenIn", "buybackAndBurnData.amountIn"]),
+          },
+          {
+            label: "Review",
+            route: getBuybackAndBurnReviewRoute(),
+            isLoading,
+            isError,
+          },
+        ];
       default:
         return [];
     }
@@ -240,6 +288,7 @@ export function CreateDAOProposal() {
     resetCreateRiskParametersProposal();
     resetCreateAddTradingPairProposal();
     resetCreateRemoveTradingPairProposal();
+    resetCreateBuybackAndBurnProposal();
   }
 
   function reset() {
@@ -252,6 +301,7 @@ export function CreateDAOProposal() {
     if (isCreateRiskParametersProposalError) return isCreateRiskParametersProposalError.message;
     if (isCreateAddTradingPairProposalError) return isCreateAddTradingPairProposalError.message;
     if (isCreateRemoveTradingPairProposalError) return isCreateRemoveTradingPairProposalError.message;
+    if (isCreateBuybackAndBurnPorposalError) return isCreateBuybackAndBurnPorposalError.message;
     return "";
   }
 
@@ -280,13 +330,11 @@ export function CreateDAOProposal() {
           tradeCooldownSec,
         } = data as CreateDAODexSettingsForm;
 
-        const psCfg = SINGLE_DAO_DEX_SETTINGS?.parameterStore;
-        if (!psCfg?.contractId || !psCfg?.abi) return;
-
-        const psAddress = ContractId.fromString(psCfg.contractId).toSolidityAddress();
+        const config = SINGLE_DAO_DEX_SETTINGS?.parameterStore;
+        const psAddress = ContractId.fromString(config.contractId).toSolidityAddress();
         const { JsonRpcSigner } = DexService.getJsonRpcProviderAndSigner();
-        const readContract = new ethers.Contract(psAddress, psCfg.abi, JsonRpcSigner);
-        const riskParameters = await readContract[psCfg.methods!.getRiskParameters!]();
+        const readContract = new ethers.Contract(psAddress, config.abi, JsonRpcSigner);
+        const riskParameters = await readContract[config.methods!.getRiskParameters!]();
 
         const currentMaxTrade = Number(riskParameters._maxTradeBps);
         const currentMaxSlippage = Number(riskParameters._maxSlippageBps);
@@ -296,7 +344,7 @@ export function CreateDAOProposal() {
         const newMaxSlippage = maxSlippageBps === undefined ? currentMaxSlippage ?? 0 : Number(maxSlippageBps);
         const newCooldown = tradeCooldownSec === undefined ? currentCooldown ?? 0 : Number(tradeCooldownSec);
 
-        const psInterface = new ethers.utils.Interface(psCfg.abi as any);
+        const psInterface = new ethers.utils.Interface(config.abi as any);
         const calldata = psInterface.encodeFunctionData("setParameters", [newMaxTrade, newMaxSlippage, newCooldown]);
 
         return createRiskParametersProposal({
@@ -315,11 +363,10 @@ export function CreateDAOProposal() {
       case DAOProposalType.AddTradingPairProposal: {
         const { title, description, linkToDiscussion = "", whitelistAdd } = data as CreateDAODexSettingsForm;
 
-        const pwCfg = SINGLE_DAO_DEX_SETTINGS?.pairWhitelist;
-        if (!pwCfg?.contractId || !pwCfg?.abi) return;
-        const pwAddress = ContractId.fromString(pwCfg.contractId).toSolidityAddress();
-        const pwInterface = new ethers.utils.Interface(pwCfg.abi as any);
-        const addPairMethod = pwCfg.methods?.addPair;
+        const config = SINGLE_DAO_DEX_SETTINGS.pairWhitelist;
+        const pwAddress = ContractId.fromString(config.contractId).toSolidityAddress();
+        const pwInterface = new ethers.utils.Interface(config.abi as any);
+        const addPairMethod = config.methods?.addPair;
 
         const adds = (whitelistAdd || []).filter((p) => (p?.tokenA || "").trim() && (p?.tokenB || "").trim());
         for (const p of adds) {
@@ -336,6 +383,8 @@ export function CreateDAOProposal() {
             calldata,
             target: pwAddress,
             value: 0,
+            governanceTokenId,
+            daoType: DAOType.GovernanceToken,
           });
         }
         return;
@@ -343,11 +392,10 @@ export function CreateDAOProposal() {
       case DAOProposalType.RemoveTradingPairProposal: {
         const { title, description, linkToDiscussion = "", whitelistRemove } = data as CreateDAODexSettingsForm;
 
-        const pwCfg = SINGLE_DAO_DEX_SETTINGS?.pairWhitelist;
-        if (!pwCfg?.contractId || !pwCfg?.abi) return;
-        const pwAddress = ContractId.fromString(pwCfg.contractId).toSolidityAddress();
-        const pwInterface = new ethers.utils.Interface(pwCfg.abi as any);
-        const removePairMethod = pwCfg.methods?.removePair;
+        const config = SINGLE_DAO_DEX_SETTINGS.pairWhitelist;
+        const pwAddress = ContractId.fromString(config.contractId).toSolidityAddress();
+        const pwInterface = new ethers.utils.Interface(config.abi as any);
+        const removePairMethod = config.methods?.removePair;
 
         const removes = (whitelistRemove || []).filter((p) => (p?.tokenA || "").trim() && (p?.tokenB || "").trim());
         for (const p of removes) {
@@ -364,10 +412,44 @@ export function CreateDAOProposal() {
             calldata,
             target: pwAddress,
             value: 0,
+            governanceTokenId,
+            daoType: DAOType.GovernanceToken,
           });
         }
         return;
       }
+      case DAOProposalType.BuybackAndBurnProposal:
+        {
+          const { title, description, linkToDiscussion = "", buybackAndBurnData } = data as CreateDAODexSettingsForm;
+
+          const config = SINGLE_DAO_DEX_SETTINGS.relay;
+          const babAddress = ContractId.fromString(config.contractId).toSolidityAddress();
+          const babInterface = new ethers.utils.Interface(config.abi as any);
+          const buybackAndBurnMethod = config.methods?.proposeBuybackAndBurn;
+          const { tokenIn, pathToQuote, amountIn, minQuoteOut, minAmountOut, maxHtkPriceD18, deadline } =
+            buybackAndBurnData;
+          const calldata = babInterface.encodeFunctionData(buybackAndBurnMethod!, [
+            tokenIn,
+            pathToQuote,
+            amountIn,
+            minQuoteOut,
+            minAmountOut,
+            maxHtkPriceD18,
+            deadline,
+          ]);
+          createBuybackAndBurnProposal({
+            governorContractId: daoGovernance,
+            title,
+            description,
+            linkToDiscussion,
+            calldata,
+            target: babAddress,
+            value: 0,
+            governanceTokenId,
+            daoType: DAOType.GovernanceToken,
+          });
+        }
+        return;
     }
   }
 

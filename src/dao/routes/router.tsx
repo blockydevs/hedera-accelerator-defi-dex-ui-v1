@@ -19,6 +19,8 @@ export const router = createHashRouter(
           <Route path={Routes.DAORemoveTradingPairDetails} element={<Pages.DAORemoveTradingPairForm />} />
           <Route path={Routes.DAORiskParamsReview} element={<Pages.DAORiskParamsReviewForm />} />
           <Route path={Routes.DAOTradingPairReview} element={<Pages.DAOTradingPairReviewForm />} />
+          <Route path={Routes.DAOBuybackAndBurnDetails} element={<Pages.DAOBuybackAndBurnForm />} />
+          <Route path={Routes.DAOBuybackAndBurnReview} element={<Pages.DAOBuybackAndBurnReviewForm />} />
         </Route>
       }
       {<Route path={`${Routes.Proposals}/:transactionHash`} element={<Pages.GovernanceProposalDetailsPage />} />}

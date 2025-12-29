@@ -2,11 +2,13 @@ import { Routes } from "@dao/routes";
 import type { ContractInterface } from "ethers";
 import ParameterStore from "./abi/ParameterStore.json";
 import PairWhitelist from "./abi/PairWhitelist.json";
+import Relay from "./abi/Relay.json";
 
 export const SINGLE_DAO_ID: string = import.meta.env.VITE_SINGLE_DAO_ID.trim();
 
 const PARAMETER_STORE_CONTRACT_ID: string = import.meta.env.VITE_PARAMETER_STORE_CONTRACT_ID.trim();
 const PAIR_WHITELIST_CONTRACT_ID: string = import.meta.env.VITE_PAIR_WHITELIST_CONTRACT_ID.trim();
+const RELAY_CONTRACT_ID: string = import.meta.env.VITE_RELAY_CONTRACT_ID.trim();
 
 export const DEFAULT_DAO_OVERVIEW_PATH = `/${Routes.Overview}`;
 
@@ -33,6 +35,13 @@ export type DexSettingsConfig = {
       addPair: string;
     };
   };
+  relay: {
+    contractId: string;
+    abi: ContractInterface;
+    methods?: {
+      proposeBuybackAndBurn: string;
+    };
+  };
 };
 
 export const SINGLE_DAO_DEX_SETTINGS: DexSettingsConfig = {
@@ -55,6 +64,13 @@ export const SINGLE_DAO_DEX_SETTINGS: DexSettingsConfig = {
       getPairs: "getAllWhitelistedPairs",
       removePair: "removePair",
       addPair: "addPair",
+    },
+  },
+  relay: {
+    contractId: RELAY_CONTRACT_ID,
+    abi: (Relay as any).abi,
+    methods: {
+      proposeBuybackAndBurn: "proposeBuybackAndBurn",
     },
   },
 };

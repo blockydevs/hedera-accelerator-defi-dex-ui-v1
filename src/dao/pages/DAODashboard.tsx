@@ -7,7 +7,6 @@ import { PropsWithChildren } from "react";
 import { DAO, DAOType, GovernanceDAODetails, MultiSigDAODetails, NFTDAODetails } from "@dao/services";
 import { DashboardHeader } from "./DashboardHeader";
 import { VotingPower } from "@dex/pages/Governance/VotingPower";
-import { NFTVotingPower } from "./NFTVotingPower";
 import { useFetchContract } from "@dao/hooks";
 import { DEFAULT_DAO_OVERVIEW_PATH } from "@dao/config/singleDao";
 
@@ -102,24 +101,9 @@ export function DAODashboard(props: DAODashboardProps) {
       />
     );
   }
-  /*
- If you know the contract, you can view the DAO
-
-  if (isDAOFound && dao?.isPrivate) {
-    return (
-      <NotFound
-        message={`This DAO is private (${daoAccountId}).`}
-        preLinkText={""}
-        linkText={"Click here to return to the DAOs list page."}
-        onLinkClick={onBackToDAOsLinkClick}
-      />
-    );
-  }
-*/
   if (dao && isDAOFound && isSuccess) {
     const { accountEVMAddress, type, name, logoUrl } = dao;
     const isGovernance = type === DAOType.GovernanceToken;
-    const isNFT = type === DAOType.NFT;
     const { safeEVMAddress } = dao as MultiSigDAODetails;
 
     return (
@@ -148,7 +132,7 @@ export function DAODashboard(props: DAODashboardProps) {
             ) : (
               <Box></Box>
             )}
-            {isNFT ? <NFTVotingPower governanceTokenId={tokenId} tokenHolderAddress={daoTokenHolder} /> : <Box></Box>}
+            {<Box></Box>}
             <Tabs
               defaultIndex={initialTabIndex}
               onChange={handleTabChange}

@@ -1,6 +1,5 @@
-import { Button, Divider, Flex, SimpleGrid, IconButton, Image, Link, UnorderedList, ListItem } from "@chakra-ui/react";
-import { DeleteIcon } from "@chakra-ui/icons";
-import { Text, RefreshIcon, Color, Tag, CopyTextButton, DefaultLogoIcon, ExternalLink } from "@shared/ui-kit";
+import { Button, Divider, Flex, SimpleGrid, Image, Link, UnorderedList, ListItem } from "@chakra-ui/react";
+import { Text, Color, Tag, CopyTextButton, DefaultLogoIcon, ExternalLink } from "@shared/ui-kit";
 import * as R from "ramda";
 import { MultiSigDAODetailsContext } from "./types";
 import { Member } from "@dao/services";
@@ -10,10 +9,8 @@ import { getDAOLinksRecordArray } from "../utils";
 import { Link as ReachLink } from "react-router-dom";
 import { usePairedWalletDetails } from "@dex/hooks";
 import { Routes } from "@dao/routes/routes";
-import { RemoveMemberLocationState, ReplaceMemberLocationState } from "../DAOProposals";
 
-const { Multisig, DAOAddMemberDetails, DAODeleteMemberDetails, DAOReplaceMemberDetails, DAOUpgradeThresholdDetails } =
-  Routes;
+const { Multisig, DAOAddMemberDetails, DAOUpgradeThresholdDetails } = Routes;
 
 export function Settings() {
   const { accountId: daoAccountId = "" } = useParams();
@@ -23,7 +20,6 @@ export function Settings() {
   const adminIndex = members?.findIndex((member) => member.accountId === adminId);
   const { isWalletPaired, walletId } = usePairedWalletDetails();
   const isAdmin = isWalletPaired && walletId === dao.adminId;
-  // @ts-ignore - @types/ramda has not yet been updated with a type for R.swap
   const membersWithAdminFirst: Member[] = R.swap(0, adminIndex, members);
   const daoLinkRecords = getDAOLinksRecordArray(webLinks);
 
@@ -33,18 +29,6 @@ export function Settings() {
 
   function handleAddNewMemberClicked() {
     navigate(`/${Multisig}/${daoAccountId}/new-proposal/${DAOAddMemberDetails}`);
-  }
-
-  function handleDeleteMemberClick(memberId: string) {
-    navigate(`/${Multisig}/${daoAccountId}/new-proposal/${DAODeleteMemberDetails}`, {
-      state: { memberId },
-    } as RemoveMemberLocationState);
-  }
-
-  function handleReplaceMemberClick(memberId: string) {
-    navigate(`/${Multisig}/${daoAccountId}/new-proposal/${DAOReplaceMemberDetails}`, {
-      state: { memberId },
-    } as ReplaceMemberLocationState);
   }
 
   function handleChangeThresholdClick() {
@@ -88,26 +72,6 @@ export function Settings() {
                     <Text.P_Small_Regular color={Color.Neutral._500}>{accountId}</Text.P_Small_Regular>
                     <CopyTextButton onClick={handleCopyMemberId} iconSize="17" />
                     {isAdminTag ? <Tag label="Admin" /> : <></>}
-                  </Flex>
-                  <Flex direction="row" gap="4" alignItems="center" height="20px">
-                    {!isAdminTag ? (
-                      <IconButton
-                        size="xs"
-                        variant="link"
-                        aria-label="refresh-member"
-                        onClick={() => handleReplaceMemberClick(member.accountId)}
-                        icon={<RefreshIcon boxSize="17" color={Color.Teal_01} />}
-                      />
-                    ) : undefined}
-                    {!isAdminTag ? (
-                      <IconButton
-                        size="xs"
-                        onClick={() => handleDeleteMemberClick(member.accountId)}
-                        variant="link"
-                        aria-label="delete-member-id"
-                        icon={<DeleteIcon color={Color.Teal_01} boxSize="17" />}
-                      />
-                    ) : undefined}
                   </Flex>
                 </Flex>
               );

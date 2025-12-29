@@ -1,5 +1,4 @@
 export * from "./useDAOs";
-export * from "./useDAOProposals";
 export * from "./useGovernanceDAOProposals";
 export * from "./useApproveProposal";
 export * from "./useExecuteProposal";

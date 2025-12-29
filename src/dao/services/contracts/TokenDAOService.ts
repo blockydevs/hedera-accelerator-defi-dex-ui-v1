@@ -187,4 +187,14 @@ async function sendRemoveTradingPairProposal(params: any) {
   return createGovernanceProposal({ ...params, proposalType: GovernanceProposalType.RemoveTradingPairProposal });
 }
 
-export { setUpAllowance, sendRiskParametersProposal, sendAddTradingPairProposal, sendRemoveTradingPairProposal };
+async function sendBuybackAndBurnProposal(params: any) {
+  return createGovernanceProposal({ ...params, proposalType: GovernanceProposalType.BuybackAndBurnProposal });
+}
+
+export {
+  setUpAllowance,
+  sendRiskParametersProposal,
+  sendAddTradingPairProposal,
+  sendRemoveTradingPairProposal,
+  sendBuybackAndBurnProposal,
+};

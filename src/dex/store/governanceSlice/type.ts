@@ -21,6 +21,7 @@ enum GovernanceProposalType {
   RiskParametersProposal = 2001,
   AddTradingPairProposal = 2002,
   RemoveTradingPairProposal = 2003,
+  BuybackAndBurnProposal = 2004,
 }
 
 /**
