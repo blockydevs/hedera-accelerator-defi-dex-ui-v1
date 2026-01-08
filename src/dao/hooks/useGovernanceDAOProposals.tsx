@@ -131,6 +131,17 @@ export function useGovernanceDAOProposals(
           tokenOut: proposalData.tokenOut ?? "",
         };
       }
+      case GovernanceProposalType.BuybackAndBurnProposal: {
+        return {
+          tokenIn: proposalData.tokenIn ?? "",
+          pathToQuote: proposalData.pathToQuote ?? "",
+          amountIn: proposalData.amountIn ?? "0",
+          minQuoteOut: proposalData.minQuoteOut ?? "0",
+          minAmountOut: proposalData.minAmountOut ?? "0",
+          maxHtkPriceD18: proposalData.maxHtkPriceD18 ?? "0",
+          deadline: proposalData.deadline ?? "0",
+        };
+      }
       default:
         return undefined;
     }
@@ -146,6 +157,9 @@ export function useGovernanceDAOProposals(
       }
       case GovernanceProposalType.RemoveTradingPairProposal: {
         return ProposalType.RemoveTradingPairProposal;
+      }
+      case GovernanceProposalType.BuybackAndBurnProposal: {
+        return ProposalType.BuybackAndBurnProposal;
       }
       default: {
         return ProposalType.TokenTransfer;

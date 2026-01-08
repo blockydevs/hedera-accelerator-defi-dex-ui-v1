@@ -50,11 +50,12 @@ export function CreateDAOProposal() {
       buybackAndBurnData: {
         tokenIn: "",
         pathToQuote: "",
+        pathQuoteToHtk: "",
         amountIn: "",
-        minQuoteOut: "",
-        minAmountOut: "",
-        maxHtkPriceD18: "",
-        deadline: "",
+        minQuoteOut: "0",
+        minAmountOut: "0",
+        maxHtkPriceD18: ethers.constants.MaxUint256.toString(),
+        deadline: "0",
       },
     },
   });
@@ -426,11 +427,21 @@ export function CreateDAOProposal() {
           const babAddress = ContractId.fromString(config.contractId).toSolidityAddress();
           const babInterface = new ethers.utils.Interface(config.abi as any);
           const buybackAndBurnMethod = config.methods?.proposeBuybackAndBurn;
-          const { tokenIn, pathToQuote, amountIn, minQuoteOut, minAmountOut, maxHtkPriceD18, deadline } =
-            buybackAndBurnData;
+          // eslint-disable-next-line max-len
+          const {
+            tokenIn,
+            pathToQuote,
+            pathQuoteToHtk,
+            amountIn,
+            minQuoteOut,
+            minAmountOut,
+            maxHtkPriceD18,
+            deadline,
+          } = buybackAndBurnData;
           const calldata = babInterface.encodeFunctionData(buybackAndBurnMethod!, [
             tokenIn,
             pathToQuote,
+            pathQuoteToHtk,
             amountIn,
             minQuoteOut,
             minAmountOut,

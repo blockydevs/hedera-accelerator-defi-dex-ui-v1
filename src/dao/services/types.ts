@@ -192,12 +192,25 @@ export interface TraidingPairDetails {
   tokenOut: string;
 }
 
+export interface BuybackAndBurnDetails {
+  type: number;
+  tokenIn: string;
+  pathToQuote: string;
+  pathQuoteToHtk: string;
+  amountIn: string;
+  minQuoteOut: string;
+  minAmountOut: string;
+  maxHtkPriceD18: string;
+  deadline: string;
+}
+
 export type ProposalDataDetails =
   | UpgradeContractDetails
   | TokenTransferDetails
   | TokenAssociateProposalDetails
   | ParameterStoreDetails
   | TraidingPairDetails
+  | BuybackAndBurnDetails
   | undefined;
 
 export enum NFTDAOFunctions {

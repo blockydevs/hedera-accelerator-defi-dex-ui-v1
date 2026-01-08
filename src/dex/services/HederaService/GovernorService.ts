@@ -27,10 +27,27 @@ const castVote = async (params: CastVoteParams) => {
   const governorContractId = ContractId.fromString(contractId);
   const preciseProposalId = BigNumber(proposalId);
   const contractFunctionParameters = new ContractFunctionParameters().addUint256(preciseProposalId).addUint8(voteType);
+  const abi = ["function castVote(uint256 proposalId, uint8 support)"];
+  const iface = new ethers.utils.Interface(abi);
+  const data = iface.encodeFunctionData(GovernorContractFunctions.CastVote, [preciseProposalId.toFixed(), voteType]);
+
+  let estimatedGas: number | undefined;
+  try {
+    const gasUsed = await DexService.estimateContractGas({
+      to: contractId,
+      data,
+      from: signer.getAccountId().toString(),
+    });
+    estimatedGas = Math.ceil(gasUsed * 1.1);
+  } catch (error) {
+    console.error("Gas estimation failed", error);
+    estimatedGas = 1000000;
+  }
+
   const castVoteTransaction = await new ContractExecuteTransaction()
     .setContractId(governorContractId)
     .setFunction(GovernorContractFunctions.CastVote, contractFunctionParameters)
-    .setGas(1000000)
+    .setGas(estimatedGas)
     .freezeWithSigner(signer);
   const response = await castVoteTransaction.executeWithSigner(signer);
   checkTransactionResponseForError(response, GovernorContractFunctions.CastVote);
@@ -53,10 +70,32 @@ const cancelProposal = async (params: CancelProposalParams) => {
       proposal.coreInformation?.inputs?.calldatas?.map((item: string) => ethers.utils.arrayify(item)) ?? []
     )
     .addBytes32(stringToByetes32(proposal.title));
+  const abi = ["function cancel(address[] targets, uint256[] values, bytes[] calldatas, bytes32 descriptionHash)"];
+  const iface = new ethers.utils.Interface(abi);
+  const data = iface.encodeFunctionData(GovernorContractFunctions.Cancel, [
+    proposal.coreInformation?.inputs?.targets ?? [],
+    proposal.coreInformation?.inputs?._values.map((value) => Number(value)) ?? [],
+    proposal.coreInformation?.inputs?.calldatas?.map((item: string) => ethers.utils.arrayify(item)) ?? [],
+    stringToByetes32(proposal.title),
+  ]);
+
+  let estimatedGas: number | undefined;
+  try {
+    const gasUsed = await DexService.estimateContractGas({
+      to: contractId,
+      data,
+      from: signer.getAccountId().toString(),
+    });
+    estimatedGas = Math.ceil(gasUsed * 1.1);
+  } catch (error) {
+    console.error("Gas estimation failed", error);
+    estimatedGas = 900000;
+  }
+
   const cancelProposalTransaction = await new ContractExecuteTransaction()
     .setContractId(governorContractId)
     .setFunction(GovernorContractFunctions.Cancel, contractFunctionParameters)
-    .setGas(900000)
+    .setGas(estimatedGas)
     .freezeWithSigner(signer);
   const response = await cancelProposalTransaction.executeWithSigner(signer);
   checkTransactionResponseForError(response, GovernorContractFunctions.Cancel);
@@ -80,10 +119,27 @@ const sendClaimGODTokenTransaction = async (params: SendClaimGODTokenTransaction
   const preciseProposalId = BigNumber(proposalId);
   const governorContractId = ContractId.fromString(contractId);
   const contractFunctionParameters = new ContractFunctionParameters().addUint256(preciseProposalId);
+  const abi = ["function claimGODToken(uint256 proposalId)"];
+  const iface = new ethers.utils.Interface(abi);
+  const data = iface.encodeFunctionData(GovernorContractFunctions.ClaimGODToken, [preciseProposalId.toFixed()]);
+
+  let estimatedGas: number | undefined;
+  try {
+    const gasUsed = await DexService.estimateContractGas({
+      to: contractId,
+      data,
+      from: signer.getAccountId().toString(),
+    });
+    estimatedGas = Math.ceil(gasUsed * 1.1);
+  } catch (error) {
+    console.error("Gas estimation failed", error);
+    estimatedGas = 900000;
+  }
+
   const executeClaimGODTokenTransaction = await new ContractExecuteTransaction()
     .setContractId(governorContractId)
     .setFunction(GovernorContractFunctions.ClaimGODToken, contractFunctionParameters)
-    .setGas(900000)
+    .setGas(estimatedGas)
     .freezeWithSigner(signer);
   const claimGODTokenresponse = await executeClaimGODTokenTransaction.executeWithSigner(signer);
   checkTransactionResponseForError(claimGODTokenresponse, GovernorContractFunctions.ClaimGODToken);
@@ -102,10 +158,27 @@ const sendLockGODTokenTransaction = async (params: SendLockGODTokenTransactionPa
   const godHolderContractId = ContractId.fromString(tokenHolderAddress);
   const amount = BigNumber(tokenAmount).shiftedBy(Number(tokenDecimals));
   const contractFunctionParameters = new ContractFunctionParameters().addUint256(amount);
+  const abi = ["function grabTokensFromUser(uint256 amount)"];
+  const iface = new ethers.utils.Interface(abi);
+  const data = iface.encodeFunctionData(GovernorContractFunctions.LockGODToken, [amount.toFixed()]);
+
+  let estimatedGas: number | undefined;
+  try {
+    const gasUsed = await DexService.estimateContractGas({
+      to: tokenHolderAddress,
+      data,
+      from: signer.getAccountId().toString(),
+    });
+    estimatedGas = Math.ceil(gasUsed * 1.1);
+  } catch (error) {
+    console.error("Gas estimation failed", error);
+    estimatedGas = 900000;
+  }
+
   const executeSendLockGODTokenTransaction = await new ContractExecuteTransaction()
     .setContractId(godHolderContractId)
     .setFunction(GovernorContractFunctions.LockGODToken, contractFunctionParameters)
-    .setGas(900000)
+    .setGas(estimatedGas)
     .freezeWithSigner(signer);
   const sendLockGODTokenResponse = await executeSendLockGODTokenTransaction.executeWithSigner(signer);
   checkTransactionResponseForError(sendLockGODTokenResponse, GovernorContractFunctions.LockGODToken);
@@ -124,10 +197,27 @@ const sendUnLockGODTokenTransaction = async (params: SendUnLockGODTokenTransacti
   const godHolderContractId = ContractId.fromString(tokenHolderAddress);
   const amount = BigNumber(tokenAmount).shiftedBy(Number(tokenDecimals));
   const contractFunctionParameters = new ContractFunctionParameters().addUint256(amount);
+  const abi = ["function revertTokensForVoter(uint256 amount)"];
+  const iface = new ethers.utils.Interface(abi);
+  const data = iface.encodeFunctionData(GovernorContractFunctions.UnLockGODToken, [amount.toFixed()]);
+
+  let estimatedGas: number | undefined;
+  try {
+    const gasUsed = await DexService.estimateContractGas({
+      to: tokenHolderAddress,
+      data,
+      from: signer.getAccountId().toString(),
+    });
+    estimatedGas = Math.ceil(gasUsed * 1.1);
+  } catch (error) {
+    console.error("Gas estimation failed", error);
+    estimatedGas = 900000;
+  }
+
   const executeSendUnLockGODTokenTransaction = await new ContractExecuteTransaction()
     .setContractId(godHolderContractId)
     .setFunction(GovernorContractFunctions.UnLockGODToken, contractFunctionParameters)
-    .setGas(900000)
+    .setGas(estimatedGas)
     .freezeWithSigner(signer);
   const sendUnLockGODTokenResponse = await executeSendUnLockGODTokenTransaction.executeWithSigner(signer);
   checkTransactionResponseForError(sendUnLockGODTokenResponse, GovernorContractFunctions.UnLockGODToken);
@@ -147,17 +237,18 @@ interface ExecuteProposalParams {
 const executeProposal = async (params: ExecuteProposalParams) => {
   const { contractId, proposal, signer, transfersFromAccount, tokenId, tokenAmount } = params;
   const governorContractId = ContractId.fromString(contractId);
-  // eslint-disable-next-line max-len
-  const targetContractAddress =
-    proposal.coreInformation?.inputs.targets?.[0] || "0xfbc5902e84632a2b29ab7038c83a7ab3380d54c8";
-  console.log("targetContractAddress", targetContractAddress);
+  const targetContractAddress = proposal.coreInformation?.inputs.targets?.[0] || "0x";
+
+  const preciseValues = proposal.coreInformation?.inputs?._values?.map((value) => Number(value)) ?? [];
+  const preciseCalldatas =
+    proposal.coreInformation?.inputs?.calldatas?.map((item: string) => ethers.utils.arrayify(item)) ?? [];
+  const descriptionHash = stringToByetes32(proposal.title);
+
   const contractFunctionParameters = new ContractFunctionParameters()
     .addAddressArray([targetContractAddress] ?? [])
-    .addUint256Array(proposal.coreInformation?.inputs?._values?.map((value) => Number(value)) ?? [])
-    .addBytesArray(
-      proposal.coreInformation?.inputs?.calldatas?.map((item: string) => ethers.utils.arrayify(item)) ?? []
-    )
-    .addBytes32(stringToByetes32(proposal.title));
+    .addUint256Array(preciseValues)
+    .addBytesArray(preciseCalldatas)
+    .addBytes32(descriptionHash);
 
   if (tokenId && transfersFromAccount && tokenAmount) {
     await DexService.setTokenAllowance({
@@ -168,10 +259,33 @@ const executeProposal = async (params: ExecuteProposalParams) => {
       signer: signer,
     });
   }
+
+  const abi = ["function execute(address[] targets, uint256[] values, bytes[] calldatas, bytes32 descriptionHash)"];
+  const iface = new ethers.utils.Interface(abi);
+  const data = iface.encodeFunctionData(GovernorContractFunctions.Execute, [
+    [targetContractAddress],
+    preciseValues,
+    preciseCalldatas,
+    descriptionHash,
+  ]);
+
+  let estimatedGas: number | undefined;
+  try {
+    const gasUsed = await DexService.estimateContractGas({
+      to: contractId,
+      data,
+      from: signer.getAccountId().toString(),
+    });
+    estimatedGas = Math.ceil(gasUsed * 1.1);
+  } catch (error) {
+    console.error("Gas estimation failed", error);
+    estimatedGas = 15000000;
+  }
+
   const executeProposalTransaction = await new ContractExecuteTransaction()
     .setContractId(governorContractId)
     .setFunction(GovernorContractFunctions.Execute, contractFunctionParameters)
-    .setGas(400000)
+    .setGas(estimatedGas)
     .freezeWithSigner(signer);
   const executeTransactionResponse = await executeProposalTransaction.executeWithSigner(signer);
   checkTransactionResponseForError(executeTransactionResponse, GovernorContractFunctions.Execute);

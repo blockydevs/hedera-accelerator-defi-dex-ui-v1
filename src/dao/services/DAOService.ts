@@ -24,6 +24,7 @@ import AssetHolderJSON from "../../dex/services/abi/AssetHolder.json";
 import GODHolderJSON from "../../dex/services/abi/GODHolder.json";
 import ParameterStoreJSON from "../../dao/config/abi/ParameterStore.json";
 import PairWhitelistJSON from "../../dao/config/abi/PairWhitelist.json";
+import RelayJSON from "../../dao/config/abi/Relay.json";
 
 import {
   DAO,
@@ -233,6 +234,28 @@ function getProposalData(type: GovernanceProposalType, data: string | undefined)
     };
   };
 
+  const getBuybackAndBurnProposalDataFromHexData = (data: string | undefined) => {
+    if (isNil(data)) return;
+
+    const contractInterface = new ethers.utils.Interface(RelayJSON.abi);
+    try {
+      const parsedData = contractInterface.decodeFunctionData("proposeBuybackAndBurn", ethers.utils.arrayify(data));
+      return {
+        type: GovernanceProposalType.BuybackAndBurnProposal,
+        tokenIn: parsedData.tokenIn,
+        pathToQuote: parsedData.pathToQuote,
+        pathQuoteToHtk: parsedData.pathQuoteToHtk,
+        amountIn: parsedData.amountIn.toString(),
+        minQuoteOut: parsedData.minQuoteOut.toString(),
+        minAmountOut: parsedData.minAmountOut.toString(),
+        maxHtkPriceD18: parsedData.maxHtkPriceD18.toString(),
+        deadline: parsedData.deadline.toString(),
+      };
+    } catch (error) {
+      return undefined;
+    }
+  };
+
   switch (Number(type)) {
     case GovernanceProposalType.TRANSFER:
       return getTokenTransferProposalDataFromHexData(data);
@@ -246,6 +269,8 @@ function getProposalData(type: GovernanceProposalType, data: string | undefined)
       return getAddTradingPairProposalDataFromHexData(data);
     case GovernanceProposalType.RemoveTradingPairProposal:
       return getRemoveTradingPairProposalDataFromHexData(data);
+    case GovernanceProposalType.BuybackAndBurnProposal:
+      return getBuybackAndBurnProposalDataFromHexData(data);
     default:
       return;
   }

@@ -49,6 +49,7 @@ export enum ProposalType {
   RiskParametersProposal = "Risk Parameters",
   AddTradingPairProposal = "Add Trading Pair",
   RemoveTradingPairProposal = "Remove Trading Pair",
+  BuybackAndBurnProposal = "Buyback and Burn",
 }
 
 export interface Votes {
@@ -72,7 +73,20 @@ export interface GOVTradingPairProposalDetails {
   tokenOut: string;
 }
 
-export type ProposalData = GOVTradingPairProposalDetails | GOVRiskParametersProposalDetails;
+export interface GOVBuybackAndBurnProposalDetails {
+  tokenIn: string;
+  pathToQuote: string;
+  amountIn: string;
+  minQuoteOut: string;
+  minAmountOut: string;
+  maxHtkPriceD18: string;
+  deadline: string;
+}
+
+export type ProposalData =
+  | GOVTradingPairProposalDetails
+  | GOVRiskParametersProposalDetails
+  | GOVBuybackAndBurnProposalDetails;
 
 export interface Proposal {
   id: number;

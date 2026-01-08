@@ -47,12 +47,25 @@ interface RiskParamsData {
   tradeCooldownSec: number;
 }
 
-interface TraidingPairData {
+interface TradingPairData {
   tokenIn: string;
   tokenOut: string;
 }
 
-export type ProposalData = MirrorNodeDecodedProposalEvent & ProposalDetailsResponse & RiskParamsData & TraidingPairData;
+interface BuybackAndBurnData {
+  pathToQuote: string;
+  amountIn: string;
+  minQuoteOut: string;
+  minAmountOut: string;
+  maxHtkPriceD18: string;
+  deadline: string;
+}
+
+export type ProposalData = MirrorNodeDecodedProposalEvent &
+  ProposalDetailsResponse &
+  RiskParamsData &
+  TradingPairData &
+  BuybackAndBurnData;
 
 export interface CanClaimDetails {
   canClaim: boolean;

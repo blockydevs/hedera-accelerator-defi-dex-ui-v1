@@ -123,6 +123,11 @@ function createMirrorNodeService(
     return response.data.evm_address;
   };
 
+  const fetchAccountEVMAddress = async (accountId: string): Promise<string> => {
+    const response = await nodeAPIs[params.network].get(`/api/v1/accounts/${accountId}`);
+    return response.data.evm_address;
+  };
+
   /**
    * Fetches information related to a specific token.
    * @param tokenId  - The ID of the token account to return data for.
@@ -193,16 +198,44 @@ function createMirrorNodeService(
 
   const callContract = async (payload: CallContractParams): Promise<any> => {
     const { block = "latest", data, estimate = false, from, gas = Gas, gasPrice = GasPrice, to, value = 0 } = payload;
-    return await nodeAPIs[params.network].post(`/api/v1/contracts/call`, {
+
+    const toAddress = to.startsWith("0x") ? to : await fetchContractEVMAddress(to);
+    let fromAddress = from;
+    if (from && !from.startsWith("0x")) {
+      fromAddress = await fetchAccountEVMAddress(from);
+    }
+
+    const body: any = {
       block,
       data,
       estimate,
-      from,
-      gas,
-      gasPrice,
-      to,
+      to: toAddress,
       value,
-    });
+    };
+
+    if (fromAddress) {
+      body.from = fromAddress;
+    }
+
+    if (!estimate) {
+      body.gas = gas;
+      body.gasPrice = gasPrice;
+    }
+
+    return await nodeAPIs[params.network].post(`/api/v1/contracts/call`, body);
+  };
+
+  /**
+   * Estimates the gas required for a contract call.
+   * @param payload - The parameters for the contract call.
+   * @returns The estimated gas used.
+   */
+  const estimateContractGas = async (payload: CallContractParams): Promise<number> => {
+    const response = await callContract({ ...payload, estimate: true });
+    const { result } = response.data;
+    const estimate = BigInt(result);
+    const buffered = (estimate * 110n) / 100n; // +10%
+    return Number(buffered);
   };
 
   /**
@@ -381,6 +414,7 @@ function createMirrorNodeService(
     fetchContractId,
     fetchTokenData,
     callContract,
+    estimateContractGas,
     fetchParsedEventLogs,
     fetchAccountInfo,
     fetchTransactionRecord,

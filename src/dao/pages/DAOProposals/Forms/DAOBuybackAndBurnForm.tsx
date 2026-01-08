@@ -12,6 +12,7 @@ import {
   InputRightAddon,
   Switch,
   Spinner,
+  Badge,
 } from "@chakra-ui/react";
 import { useFormContext } from "react-hook-form";
 import { CreateDAODexSettingsForm } from "../types";
@@ -20,22 +21,48 @@ import { ContractId } from "@hashgraph/sdk";
 import { SINGLE_DAO_DEX_SETTINGS } from "@dao/config/singleDao";
 import { ContractInterface, ethers } from "ethers";
 import { TokenId } from "@hashgraph/sdk";
+import BigNumber from "bignumber.js";
 import { solidityAddressToTokenIdString } from "@shared/utils";
 import { SINGLE_DAO_ID } from "@dao/config/singleDao";
 import { useDAOs, useFetchContract } from "@dao/hooks";
+import { GovernanceDAODetails } from "@dao/services/types";
 
 const DEFAULT_DEADLINE_OFFSET_SEC = Number(import.meta.env.VITE_BUYBACK_DEADLINE_OFFSET_SEC || 3600);
 const AVG_BLOCK_TIME = Number(import.meta.env.VITE_AVG_BLOCK_TIME || 2);
 const USDC_TOKEN_ID = import.meta.env.VITE_USDC_TOKEN_ID || "0.0.456858";
+const WHBAR_TOKEN_ID = import.meta.env.VITE_WHBAR_TOKEN_ID || "0.0.15058";
 const SAUCERSWAP_API_URL = import.meta.env.VITE_SAUCERSWAP_API_URL || "https://test-api.saucerswap.finance";
 const SAUCERSWAP_API_KEY = import.meta.env.VITE_SAUCERSWAP_API_KEY || "";
 const DEFAULT_FEE = 3000;
 
 interface SaucerswapPool {
   id: number;
-  fee: string;
+  fee?: string;
   tokenA: { id: string; symbol: string };
   tokenB: { id: string; symbol: string };
+}
+
+async function fetchSaucerswapPools(path: string): Promise<SaucerswapPool[] | null> {
+  try {
+    const url = `${SAUCERSWAP_API_URL}${path}`;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (SAUCERSWAP_API_KEY) {
+      headers["x-api-key"] = SAUCERSWAP_API_KEY;
+    }
+
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      console.warn(`Saucerswap API error (${path}): ${response.status}`);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.warn(`Saucerswap: Failed to fetch pools from ${path}`, error);
+    return null;
+  }
 }
 
 function shortenAddress(address: string, startLength: number = 6, endLength: number = 4) {
@@ -59,8 +86,42 @@ function solidityAddressToTokenId(solAddress: string): string | null {
   }
 }
 
-function buildPath(tokenIn: string, tokenOut: string, feeHex: string): string {
-  return `0x${strip0x(tokenIn)}${feeHex}${strip0x(tokenOut)}`;
+function buildPath(tokens: string[], fees: string[], version?: "V1" | "V2" | null): string {
+  if (tokens.length < 2) {
+    return "0x";
+  }
+  if (version === "V1") {
+    const coder = new ethers.utils.AbiCoder();
+    const formattedTokens = tokens.map((t) => (t.startsWith("0x") ? t : "0x" + t));
+    return coder.encode(["address[]"], [formattedTokens]);
+  }
+  let path = "0x";
+  for (let i = 0; i < tokens.length; i++) {
+    path += strip0x(tokens[i]);
+    if (i < fees.length) {
+      path += fees[i];
+    }
+  }
+  return path;
+}
+
+function normalizeToSolidityAddress(input: string): string {
+  const v = (input || "").trim();
+  if (!v) return "";
+  if (v.startsWith("0x")) return v.toLowerCase();
+  if (v.match(/^[0-9a-fA-F]{40}$/)) return "0x" + v.toLowerCase();
+  try {
+    const addr = TokenId.fromString(v).toSolidityAddress();
+    return "0x" + addr.toLowerCase();
+  } catch {
+    return v.startsWith("0x") ? v.toLowerCase() : "0x" + v.toLowerCase();
+  }
+}
+
+function isWhbarToken(address: string): boolean {
+  const normalized = normalizeToSolidityAddress(address);
+  const whbarNormalized = normalizeToSolidityAddress(WHBAR_TOKEN_ID);
+  return normalized.toLowerCase() === whbarNormalized.toLowerCase();
 }
 
 async function getTokenIdFromAddress(address: string): Promise<string> {
@@ -69,25 +130,22 @@ async function getTokenIdFromAddress(address: string): Promise<string> {
   if (v.match(/^\d+\.\d+\.\d+$/)) {
     return v;
   }
-  if ((ethers as any)?.utils?.isAddress?.(v)) {
-    const result = solidityAddressToTokenId(v);
-    if (result) return result;
+  const hex = v.startsWith("0x") ? v : "0x" + v;
+  if (ethers.utils.isAddress(hex)) {
+    try {
+      const result = solidityAddressToTokenIdString(hex);
+      if (result && result !== hex) return result;
+    } catch {
+      /* ignore */
+    }
   }
   return v;
 }
 
-function normalizeToSolidityAddress(input: string): string {
-  const v = (input || "").trim();
-  if (!v) return "";
-  if ((ethers as any)?.utils?.isAddress?.(v)) return v;
-  try {
-    return TokenId.fromString(v).toSolidityAddress();
-  } catch {
-    return v;
-  }
-}
-
-async function getPoolFeeHex(tokenInAddress: string, tokenOutAddress: string): Promise<string | null> {
+async function getPoolFeeHex(
+  tokenInAddress: string,
+  tokenOutAddress: string
+): Promise<{ feeHex: string; version: "V1" | "V2" } | null> {
   try {
     const [tokenInId, tokenOutId] = await Promise.all([
       getTokenIdFromAddress(tokenInAddress),
@@ -95,46 +153,90 @@ async function getPoolFeeHex(tokenInAddress: string, tokenOutAddress: string): P
     ]);
 
     if (!tokenInId || !tokenOutId) {
-      console.warn("Could not resolve token IDs for fee lookup");
+      console.warn("Could not resolve token IDs for fee lookup", { tokenInAddress, tokenOutAddress });
       return null;
     }
 
-    const url = `${SAUCERSWAP_API_URL}/v2/pools`;
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (SAUCERSWAP_API_KEY) {
-      headers["x-api-key"] = SAUCERSWAP_API_KEY;
-    }
-
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-      console.warn(`Saucerswap API error: ${response.status}`);
-      return null;
-    }
-
-    const pools: SaucerswapPool[] = await response.json();
-
-    const pool = pools.find(
+    const v1Pools = await fetchSaucerswapPools("/pools");
+    const v1Pool = v1Pools?.find(
       (p) =>
         (p.tokenA.id === tokenInId && p.tokenB.id === tokenOutId) ||
         (p.tokenA.id === tokenOutId && p.tokenB.id === tokenInId)
     );
 
-    if (!pool) {
-      console.warn(`Saucerswap: Pool not found for pair ${tokenInId}/${tokenOutId}`);
-      return null;
+    if (v1Pool) {
+      return {
+        feeHex: DEFAULT_FEE.toString(16).padStart(6, "0"),
+        version: "V1",
+      };
     }
 
-    const feeNumber = Number(pool.fee);
-    if (!Number.isFinite(feeNumber) || feeNumber < 0) {
-      console.warn(`Saucerswap: Invalid fee value for pool ${pool.id}: ${pool.fee}`);
-      return null;
+    const v2Pools = await fetchSaucerswapPools("/v2/pools");
+    const v2Pool = v2Pools?.find(
+      (p) =>
+        (p.tokenA.id === tokenInId && p.tokenB.id === tokenOutId) ||
+        (p.tokenA.id === tokenOutId && p.tokenB.id === tokenInId)
+    );
+
+    if (v2Pool) {
+      const feeNumber = Number(v2Pool.fee);
+      if (Number.isFinite(feeNumber) && feeNumber >= 0) {
+        return {
+          feeHex: feeNumber.toString(16).padStart(6, "0"),
+          version: "V2",
+        };
+      }
     }
 
-    return feeNumber.toString(16).padStart(6, "0");
+    console.warn(`Saucerswap: No pool found for ${tokenInId}/${tokenOutId}`);
+    return null;
   } catch (error) {
-    console.warn("Saucerswap: Failed to fetch pool fee", error);
+    console.error("Saucerswap: Failed to fetch pool fee", error);
+    return null;
+  }
+}
+
+async function getQuoteTokenForDaoToken(
+  daoTokenId: string
+): Promise<{ tokenId: string; version: "V1" | "V2"; feeHex: string } | null> {
+  if (!daoTokenId) return null;
+  try {
+    const resolvedDaoTokenId = await getTokenIdFromAddress(daoTokenId);
+
+    const v1Pools = await fetchSaucerswapPools("/pools");
+    if (v1Pools) {
+      const usdcId = USDC_TOKEN_ID;
+      const usdcPool = v1Pools.find(
+        (p) =>
+          (p.tokenA.id === resolvedDaoTokenId && p.tokenB.id === usdcId) ||
+          (p.tokenB.id === resolvedDaoTokenId && p.tokenA.id === usdcId)
+      );
+      if (usdcPool) {
+        return { tokenId: usdcId, version: "V1", feeHex: DEFAULT_FEE.toString(16).padStart(6, "0") };
+      }
+    }
+
+    const v2Pools = await fetchSaucerswapPools("/v2/pools");
+    if (v2Pools) {
+      const usdcId = USDC_TOKEN_ID;
+      const usdcPool = v2Pools.find(
+        (p) =>
+          (p.tokenA.id === resolvedDaoTokenId && p.tokenB.id === usdcId) ||
+          (p.tokenB.id === resolvedDaoTokenId && p.tokenA.id === usdcId)
+      );
+      if (usdcPool) {
+        const feeNumber = Number(usdcPool.fee);
+        const feeHex = Number.isFinite(feeNumber)
+          ? feeNumber.toString(16).padStart(6, "0")
+          : DEFAULT_FEE.toString(16).padStart(6, "0");
+        return { tokenId: usdcId, version: "V2", feeHex };
+      }
+    }
+
+    console.warn(`Saucerswap: No USDC pool found for DAO Token ${resolvedDaoTokenId}`);
+    return null;
+  } catch (e) {
+    console.error("Failed to fetch pools for DAO Token", e);
     return null;
   }
 }
@@ -142,6 +244,7 @@ async function getPoolFeeHex(tokenInAddress: string, tokenOutAddress: string): P
 interface SaucerswapTokenInfo {
   decimals: number;
   symbol?: string;
+  priceUsd?: number;
 }
 
 async function getTokenInfoFromSaucerswap(solAddress: string): Promise<SaucerswapTokenInfo> {
@@ -169,6 +272,7 @@ async function getTokenInfoFromSaucerswap(solAddress: string): Promise<Saucerswa
     return {
       decimals: data?.decimals ?? 8,
       symbol: data?.symbol,
+      priceUsd: data?.priceUsd,
     };
   } catch (error) {
     console.error(`Failed to fetch token info for ${solAddress}`, error);
@@ -180,14 +284,15 @@ interface TokenOption {
   address: string;
   symbol?: string;
   decimals?: number;
+  priceUsd?: number;
 }
 
 export function DAOBuybackAndBurnForm() {
   const daos = useDAOs();
   const daoAccountIdQueryResults = useFetchContract(SINGLE_DAO_ID)!;
-  const foundDao: { votingDelay: number; votingPeriod: number } = daos?.data?.find(
+  const foundDao = daos?.data?.find(
     (d) => d.accountEVMAddress.toLowerCase() === daoAccountIdQueryResults?.data?.data.evm_address.toLowerCase()
-  ) as { votingDelay: number; votingPeriod: number };
+  ) as GovernanceDAODetails | undefined;
 
   const {
     register,
@@ -202,19 +307,25 @@ export function DAOBuybackAndBurnForm() {
   const [selectedToken, setSelectedToken] = useState<TokenOption | null>(null);
   const [quoteTokenAddress, setQuoteTokenAddress] = useState<string>("");
   const [quoteTokenDecimals, setQuoteTokenDecimals] = useState<number>(6); // USDC default
+  const [liquidityError, setLiquidityError] = useState<string | null>(null);
+
+  const [daoTokenPriceUsd, setDaoTokenPriceUsd] = useState<number | undefined>();
+  const [selectedTokenPriceUsd, setSelectedTokenPriceUsd] = useState<number | undefined>();
 
   // Fee state
   const [poolFeeHex, setPoolFeeHex] = useState<string | null>(null);
+  const [poolFeeQuoteToDaoHex, setPoolFeeQuoteToDaoHex] = useState<string | null>(null);
+  const [poolVersionTokenToQuote, setPoolVersionTokenToQuote] = useState<"V1" | "V2" | null>(null);
+  const [poolVersionQuoteToDao, setPoolVersionQuoteToDao] = useState<"V1" | "V2" | null>(null);
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError] = useState<string | null>(null);
 
   // Slippage modes
   const [usePercentMinQuoteOut, setUsePercentMinQuoteOut] = useState(true);
-  const [minQuoteOutPercent, setMinQuoteOutPercent] = useState<string>("95");
+  const [minQuoteOutPercent, setMinQuoteOutPercent] = useState<string>("80");
   const [usePercentMinAmountOut, setUsePercentMinAmountOut] = useState(true);
-  const [minAmountOutPercent, setMinAmountOutPercent] = useState<string>("95");
+  const [minAmountOutPercent, setMinAmountOutPercent] = useState<string>("80");
 
-  // Max HTK price in dollars (up to 6 decimals)
   const [maxHtkPriceDollars, setMaxHtkPriceDollars] = useState<string>("");
 
   const [governanceValues, setGovernanceValues] = useState({
@@ -224,6 +335,21 @@ export function DAOBuybackAndBurnForm() {
   });
 
   const amountIn = watch("buybackAndBurnData.amountIn");
+  const [daoTokenInfo, setDaoTokenInfo] = useState<{ symbol?: string; decimals: number }>({ decimals: 8 });
+
+  useEffect(() => {
+    if (foundDao?.tokenId) {
+      getTokenInfoFromSaucerswap(foundDao.tokenId).then((data) => {
+        setDaoTokenInfo(data);
+        setDaoTokenPriceUsd(data.priceUsd);
+      });
+    }
+  }, [foundDao?.tokenId]);
+
+  const isDirectQuote =
+    selectedToken &&
+    quoteTokenAddress &&
+    normalizeToSolidityAddress(selectedToken.address).toLowerCase() === quoteTokenAddress.toLowerCase();
 
   // Load available tokens from pairWhitelist
   useEffect(() => {
@@ -258,6 +384,7 @@ export function DAOBuybackAndBurnForm() {
                   try {
                     const saucerswapData = await getTokenInfoFromSaucerswap(tokenIn);
                     tokenInfo.decimals = saucerswapData.decimals;
+                    tokenInfo.priceUsd = saucerswapData.priceUsd;
                     if (saucerswapData.symbol) {
                       tokenInfo.symbol = saucerswapData.symbol;
                     }
@@ -274,6 +401,7 @@ export function DAOBuybackAndBurnForm() {
                   try {
                     const saucerswapData = await getTokenInfoFromSaucerswap(tokenOut);
                     tokenInfo.decimals = saucerswapData.decimals;
+                    tokenInfo.priceUsd = saucerswapData.priceUsd;
                     if (saucerswapData.symbol) {
                       tokenInfo.symbol = saucerswapData.symbol;
                     }
@@ -304,12 +432,31 @@ export function DAOBuybackAndBurnForm() {
     };
   }, []);
 
-  // Load quote token address
+  // Load quote token address dynamically based on DAO Token
   useEffect(() => {
     async function loadQuoteToken() {
+      if (!foundDao?.tokenId) return;
+      setLiquidityError(null);
+
       try {
-        const quoteAddr = normalizeToSolidityAddress(USDC_TOKEN_ID);
+        const result = await getQuoteTokenForDaoToken(foundDao.tokenId);
+
+        if (!result) {
+          setLiquidityError(
+            `
+            No USDC liquidity pool found for DAO token (${foundDao.tokenId}). 
+            Buyback and Burn requires a USDC liquidity pair.
+            `
+          );
+          setQuoteTokenAddress("");
+          setPoolVersionQuoteToDao(null);
+          return;
+        }
+
+        const quoteAddr = normalizeToSolidityAddress(result.tokenId);
         setQuoteTokenAddress(quoteAddr);
+        setPoolVersionQuoteToDao(result.version);
+        setPoolFeeQuoteToDaoHex(result.feeHex);
 
         try {
           const saucerswapData = await getTokenInfoFromSaucerswap(quoteAddr);
@@ -319,31 +466,35 @@ export function DAOBuybackAndBurnForm() {
         } catch {
           setQuoteTokenDecimals(6);
         }
-      } catch {
-        // ignore
+      } catch (e) {
+        console.error("Error loading quote token:", e);
+        setLiquidityError("Failed to verify liquidity pools for DAO token.");
       }
     }
     loadQuoteToken();
-  }, []);
+  }, [foundDao?.tokenId]);
 
   useEffect(() => {
     async function fetchGovernanceDetails() {
       try {
-        setGovernanceValues({
-          votingDelay: foundDao.votingDelay,
-          votingPeriod: foundDao.votingPeriod,
-          timelockMinDelay: 0,
-        });
+        if (foundDao) {
+          setGovernanceValues({
+            votingDelay: foundDao.votingDelay,
+            votingPeriod: foundDao.votingPeriod,
+            timelockMinDelay: 0,
+          });
+        }
       } catch (e) {
         console.error("Failed to fetch governance details", e);
       }
     }
     fetchGovernanceDetails();
-  }, []);
+  }, [foundDao]);
 
   useEffect(() => {
     if (!selectedToken || !quoteTokenAddress) {
       setPoolFeeHex(null);
+      setPoolVersionTokenToQuote(null);
       return;
     }
 
@@ -352,21 +503,27 @@ export function DAOBuybackAndBurnForm() {
       setFeeLoading(true);
       setFeeError(null);
       try {
-        const tokenInAddr = normalizeToSolidityAddress(selectedToken?.address || "0x");
-        const feeHex = await getPoolFeeHex(tokenInAddr, quoteTokenAddress);
+        // For HBAR swaps, lookup pool using WHBAR token ID
+        const tokenInAddr = isWhbarToken(selectedToken?.address || "")
+          ? normalizeToSolidityAddress(WHBAR_TOKEN_ID)
+          : normalizeToSolidityAddress(selectedToken?.address || "0x");
+        const result = await getPoolFeeHex(tokenInAddr, quoteTokenAddress);
 
         if (!ignore) {
-          if (feeHex) {
-            setPoolFeeHex(feeHex);
+          if (result) {
+            setPoolFeeHex(result.feeHex);
+            setPoolVersionTokenToQuote(result.version);
             setFeeError(null);
           } else {
             setPoolFeeHex(DEFAULT_FEE.toString(16).padStart(6, "0"));
+            setPoolVersionTokenToQuote(null);
             setFeeError("Pool not found - using default fee (0.3%)");
           }
         }
       } catch (e: any) {
         if (!ignore) {
           setPoolFeeHex(DEFAULT_FEE.toString(16).padStart(6, "0"));
+          setPoolVersionTokenToQuote(null);
           setFeeError(`Failed to fetch fee: ${e?.message || "Unknown error"} - using default`);
         }
       } finally {
@@ -380,13 +537,55 @@ export function DAOBuybackAndBurnForm() {
   }, [selectedToken, quoteTokenAddress]);
 
   useEffect(() => {
-    if (selectedToken && quoteTokenAddress && poolFeeHex) {
+    if (selectedToken && quoteTokenAddress && foundDao?.tokenId) {
       const tokenInAddr = normalizeToSolidityAddress(selectedToken.address);
-      const path = buildPath(tokenInAddr, quoteTokenAddress, poolFeeHex);
-      setValue("buybackAndBurnData.pathToQuote", path);
-      setValue("buybackAndBurnData.tokenIn", tokenInAddr);
+      const whbarAddr = normalizeToSolidityAddress(WHBAR_TOKEN_ID);
+      const isHbar = isWhbarToken(selectedToken.address);
+      const daoTokenAddr = normalizeToSolidityAddress(foundDao.tokenId);
+
+      if (poolFeeQuoteToDaoHex) {
+        const versionQuoteToDao = poolVersionQuoteToDao || "V2";
+        const pathQuoteToHtk = buildPath([quoteTokenAddress, daoTokenAddr], [poolFeeQuoteToDaoHex], versionQuoteToDao);
+        setValue("buybackAndBurnData.pathQuoteToHtk", pathQuoteToHtk);
+      }
+
+      if (tokenInAddr.toLowerCase() === quoteTokenAddress.toLowerCase()) {
+        // Direct Quote (USDC) -> DAO Token.
+        // Treasury.sol ignores pathToQuote when tokenIn == QUOTE_TOKEN
+        // Set empty path (0x) - contract will handle this case directly
+        setValue("buybackAndBurnData.pathToQuote", "0x");
+        setValue("buybackAndBurnData.tokenIn", tokenInAddr);
+        setValue("buybackAndBurnData.minQuoteOut", "0");
+      } else if (isHbar) {
+        // HBAR/WHBAR -> Quote (USDC)
+        // Treasury.sol requires: path must start with WHBAR and end with QUOTE_TOKEN
+        // Uses SwapKind.ExactHBARForTokens
+        if (poolFeeHex) {
+          const version = poolVersionTokenToQuote || "V2";
+          // Path: WHBAR -> USDC
+          const path = buildPath([whbarAddr, quoteTokenAddress], [poolFeeHex], version);
+          setValue("buybackAndBurnData.pathToQuote", path);
+          setValue("buybackAndBurnData.tokenIn", whbarAddr);
+        }
+      } else if (poolFeeHex) {
+        // Regular Token -> Quote (USDC)
+        // The contract expects pathToQuote to end at the quote token (USDC).
+        const version = poolVersionTokenToQuote || "V2";
+        const path = buildPath([tokenInAddr, quoteTokenAddress], [poolFeeHex], version);
+        setValue("buybackAndBurnData.pathToQuote", path);
+        setValue("buybackAndBurnData.tokenIn", tokenInAddr);
+      }
     }
-  }, [selectedToken, quoteTokenAddress, poolFeeHex, setValue]);
+  }, [
+    selectedToken,
+    quoteTokenAddress,
+    poolFeeHex,
+    poolFeeQuoteToDaoHex,
+    poolVersionTokenToQuote,
+    poolVersionQuoteToDao,
+    setValue,
+    foundDao?.tokenId,
+  ]);
 
   useEffect(() => {
     const { votingDelay, votingPeriod, timelockMinDelay } = governanceValues;
@@ -401,49 +600,88 @@ export function DAOBuybackAndBurnForm() {
     (percentValue: string) => {
       setMinQuoteOutPercent(percentValue);
       if (usePercentMinQuoteOut && amountIn && selectedToken?.decimals !== undefined) {
-        const percent = parseFloat(percentValue) || 0;
-        const amountInNum = parseFloat(amountIn) || 0;
-        const minOut = (amountInNum * percent) / 100;
-        const minOutScaled = Math.floor(minOut * Math.pow(10, quoteTokenDecimals - (selectedToken?.decimals || 0)));
-        setValue("buybackAndBurnData.minQuoteOut", minOutScaled > 0 ? minOutScaled.toString() : "0");
+        const percent = new BigNumber(percentValue || "0");
+        const amountInBN = new BigNumber(amountIn || "0");
+        const priceRatio = new BigNumber(selectedTokenPriceUsd || 1);
+        const minOut = amountInBN.times(priceRatio).times(percent).div(100);
+        const scale = new BigNumber(10).pow(quoteTokenDecimals - (selectedToken?.decimals || 0));
+        const minOutScaled = minOut.times(scale).integerValue(BigNumber.ROUND_FLOOR);
+        setValue("buybackAndBurnData.minQuoteOut", minOutScaled.gt(0) ? minOutScaled.toFixed(0) : "0");
       }
     },
-    [usePercentMinQuoteOut, amountIn, selectedToken, quoteTokenDecimals, setValue]
+    [usePercentMinQuoteOut, amountIn, selectedToken, quoteTokenDecimals, setValue, selectedTokenPriceUsd]
   );
 
   const handleMinAmountOutPercentChange = useCallback(
     (percentValue: string) => {
       setMinAmountOutPercent(percentValue);
       if (usePercentMinAmountOut && amountIn && selectedToken?.decimals !== undefined) {
-        const percent = parseFloat(percentValue) || 0;
-        const amountInNum = parseFloat(amountIn) || 0;
-        const minOut = (amountInNum * percent) / 100;
-        const minOutScaled = Math.floor(minOut);
-        setValue("buybackAndBurnData.minAmountOut", minOutScaled > 0 ? minOutScaled.toString() : "0");
+        const percent = new BigNumber(percentValue || "0");
+        const amountInBN = new BigNumber(amountIn || "0");
+        const priceRatio =
+          selectedTokenPriceUsd && daoTokenPriceUsd
+            ? new BigNumber(selectedTokenPriceUsd).div(daoTokenPriceUsd)
+            : new BigNumber(1);
+        const minOut = amountInBN.times(priceRatio).times(percent).div(100);
+        const scale = new BigNumber(10).pow(daoTokenInfo.decimals - (selectedToken?.decimals || 0));
+        const minOutScaled = minOut.times(scale).integerValue(BigNumber.ROUND_FLOOR);
+        setValue("buybackAndBurnData.minAmountOut", minOutScaled.gt(0) ? minOutScaled.toFixed(0) : "0");
       }
     },
-    [usePercentMinAmountOut, amountIn, selectedToken, setValue]
+    [
+      usePercentMinAmountOut,
+      amountIn,
+      selectedToken,
+      setValue,
+      selectedTokenPriceUsd,
+      daoTokenPriceUsd,
+      daoTokenInfo.decimals,
+    ]
   );
 
   useEffect(() => {
     if (usePercentMinQuoteOut && amountIn && selectedToken?.decimals !== undefined) {
-      const percent = parseFloat(minQuoteOutPercent) || 0;
-      const amountInNum = parseFloat(amountIn) || 0;
-      const minOut = (amountInNum * percent) / 100;
-      const minOutScaled = Math.floor(minOut * Math.pow(10, quoteTokenDecimals - (selectedToken?.decimals || 0)));
-      setValue("buybackAndBurnData.minQuoteOut", minOutScaled > 0 ? minOutScaled.toString() : "0");
+      const percent = new BigNumber(minQuoteOutPercent || "0");
+      const amountInBN = new BigNumber(amountIn || "0");
+      const priceRatio = new BigNumber(selectedTokenPriceUsd || 1);
+      const minOut = amountInBN.times(priceRatio).times(percent).div(100);
+      const scale = new BigNumber(10).pow(quoteTokenDecimals - (selectedToken?.decimals || 0));
+      const minOutScaled = minOut.times(scale).integerValue(BigNumber.ROUND_FLOOR);
+      setValue("buybackAndBurnData.minQuoteOut", minOutScaled.gt(0) ? minOutScaled.toFixed(0) : "0");
     }
-  }, [usePercentMinQuoteOut, amountIn, selectedToken, quoteTokenDecimals, minQuoteOutPercent, setValue]);
+  }, [
+    usePercentMinQuoteOut,
+    amountIn,
+    selectedToken,
+    quoteTokenDecimals,
+    minQuoteOutPercent,
+    setValue,
+    selectedTokenPriceUsd,
+  ]);
 
   useEffect(() => {
     if (usePercentMinAmountOut && amountIn && selectedToken?.decimals !== undefined) {
-      const percent = parseFloat(minAmountOutPercent) || 0;
-      const amountInNum = parseFloat(amountIn) || 0;
-      const minOut = (amountInNum * percent) / 100;
-      const minOutScaled = Math.floor(minOut);
-      setValue("buybackAndBurnData.minAmountOut", minOutScaled > 0 ? minOutScaled.toString() : "0");
+      const percent = new BigNumber(minAmountOutPercent || "0");
+      const amountInBN = new BigNumber(amountIn || "0");
+      const priceRatio =
+        selectedTokenPriceUsd && daoTokenPriceUsd
+          ? new BigNumber(selectedTokenPriceUsd).div(daoTokenPriceUsd)
+          : new BigNumber(1);
+      const minOut = amountInBN.times(priceRatio).times(percent).div(100);
+      const scale = new BigNumber(10).pow(daoTokenInfo.decimals - (selectedToken?.decimals || 0));
+      const minOutScaled = minOut.times(scale).integerValue(BigNumber.ROUND_FLOOR);
+      setValue("buybackAndBurnData.minAmountOut", minOutScaled.gt(0) ? minOutScaled.toFixed(0) : "0");
     }
-  }, [usePercentMinAmountOut, amountIn, selectedToken, minAmountOutPercent, setValue]);
+  }, [
+    usePercentMinAmountOut,
+    amountIn,
+    selectedToken,
+    minAmountOutPercent,
+    setValue,
+    daoTokenInfo.decimals,
+    selectedTokenPriceUsd,
+    daoTokenPriceUsd,
+  ]);
 
   const handleMaxHtkPriceChange = useCallback(
     (dollarValue: string) => {
@@ -463,6 +701,7 @@ export function DAOBuybackAndBurnForm() {
     (address: string) => {
       const token = availableTokens.find((t) => t.address === address);
       setSelectedToken(token || null);
+      setSelectedTokenPriceUsd(token?.priceUsd);
       if (token) {
         setValue("buybackAndBurnData.tokenIn", normalizeToSolidityAddress(token.address));
       }
@@ -481,9 +720,27 @@ export function DAOBuybackAndBurnForm() {
   return (
     <Flex direction="column" gap="1.3rem">
       <Text fontWeight="bold">Buyback and Burn Configuration</Text>
+      <Box bg="purple.50" p={3} borderRadius="md" border="1px solid" borderColor="purple.200">
+        <Text color="purple.700" fontWeight="bold" fontSize="sm">
+          Proposal Deposit Info
+        </Text>
+        <Text color="purple.600" fontSize="xs">
+          Creating this proposal requires a deposit of <strong>1.0 {daoTokenInfo.symbol || "Governance Token"}</strong>.
+          The exact raw amount is <code>{Math.pow(10, daoTokenInfo.decimals)}</code> units. This deposit will be
+          returned if the proposal is executed or if it fails but meets certain criteria.
+        </Text>
+      </Box>
       {loading && <Text color="gray.500">Loading available tokens…</Text>}
       {error && <Text color="red.400">{error}</Text>}
-      <Box>
+      {liquidityError && (
+        <Box bg="red.50" p={3} borderRadius="md" border="1px solid" borderColor="red.200">
+          <Text color="red.600" fontWeight="bold">
+            Liquidity Error
+          </Text>
+          <Text color="red.600">{liquidityError}</Text>
+        </Box>
+      )}
+      <Box opacity={liquidityError ? 0.5 : 1} pointerEvents={liquidityError ? "none" : "auto"}>
         <FormControl>
           <FormLabel fontWeight="semibold">Token to Sell</FormLabel>
           <Select
@@ -509,52 +766,92 @@ export function DAOBuybackAndBurnForm() {
           <Box bg="gray.50" p={3} borderRadius="md">
             <Text fontSize="sm" color="gray.600">
               Selected Token: <strong>{selectedToken.symbol || shortenAddress(selectedToken.address)}</strong>
+              {isWhbarToken(selectedToken.address) && (
+                <Badge colorScheme="orange" fontSize="xs" ml={2} variant="solid">
+                  HBAR Swap
+                </Badge>
+              )}
               <br />
               Decimals: <strong>{selectedToken.decimals ?? "Unknown"}</strong>
               <br />
               Address: <code>{selectedToken.address}</code>
+              {isWhbarToken(selectedToken.address) && (
+                <Box mt={2} p={2} bg="orange.50" borderRadius="sm">
+                  <Text fontSize="xs" color="orange.700">
+                    ℹ️ This token will be treated as HBAR. Treasury will use native HBAR for swap.
+                  </Text>
+                </Box>
+              )}
             </Text>
           </Box>
 
           <Box bg={feeError ? "yellow.50" : "blue.50"} p={3} borderRadius="md">
-            <Flex align="center" gap={2}>
+            <Flex align="center" gap={2} wrap="wrap">
               <Text fontSize="sm" color={feeError ? "yellow.700" : "blue.700"}>
                 <strong>Pool Fee:</strong> {feeLoading ? <Spinner size="xs" /> : getFeeDisplayValue()}
               </Text>
+              {poolVersionTokenToQuote && (
+                <Badge colorScheme="purple" fontSize="xs" variant="subtle">
+                  Saucerswap {poolVersionTokenToQuote}
+                </Badge>
+              )}
             </Flex>
             {feeError && (
               <Text fontSize="xs" color="yellow.600" mt={1}>
                 ⚠️ {feeError}
               </Text>
             )}
-            <Text fontSize="xs" color="gray.500" mt={1}>
-              Fee is fetched from Saucerswap V2 pools for the {selectedToken.symbol || "selected token"} → USDC pair.
+            <Text fontSize="xs" color="gray.500" mt={2}>
+              <strong>Pool Versioning:</strong>
+              {!isDirectQuote && (
+                <>
+                  <br />
+                  1. {selectedToken.symbol || "Token"} → USDC:{" "}
+                  {poolVersionTokenToQuote ? (
+                    <Badge colorScheme="purple" fontSize="2xs" ml={1} variant="subtle">
+                      {poolVersionTokenToQuote}
+                    </Badge>
+                  ) : (
+                    "Not found"
+                  )}
+                </>
+              )}
+              <br />
+              {!isDirectQuote ? "2." : "1."} USDC → {foundDao?.name || "DAO"} Token:{" "}
+              {poolVersionQuoteToDao ? (
+                <Badge colorScheme="purple" fontSize="2xs" ml={1} variant="subtle">
+                  {poolVersionQuoteToDao}
+                </Badge>
+              ) : (
+                "Not found"
+              )}
             </Text>
           </Box>
 
           <Box>
             <FormControl>
-              <FormLabel fontWeight="semibold">Amount In (raw units)</FormLabel>
+              <FormLabel fontWeight="semibold">Amount to Sell (Raw units)</FormLabel>
               <Input
-                type="text"
-                placeholder={`Enter amount in raw units${
-                  selectedToken.decimals !== undefined ? ` (${selectedToken.decimals} decimals)` : ""
-                }`}
-                {...register("buybackAndBurnData.amountIn", {
-                  required: "Amount is required",
-                  validate: (v) => {
-                    const num = parseFloat(v || "");
-                    if (isNaN(num) || num <= 0) return "Amount must be greater than 0";
-                    return true;
-                  },
-                })}
+                type="number"
+                step="1"
+                placeholder={`Enter raw amount of ${selectedToken.symbol || "tokens"}`}
+                {...register("buybackAndBurnData.amountIn")}
               />
               <FormHelperText>
                 {selectedToken.decimals !== undefined && (
-                  <>
-                    This token has <strong>{selectedToken.decimals}</strong> decimals. For example, to send 1 token,
-                    enter: <code>{Math.pow(10, selectedToken.decimals)}</code>
-                  </>
+                  <Box>
+                    This token has <strong>{selectedToken.decimals}</strong> decimals. Enter the amount in raw units
+                    (e.g., if decimals is 8, 1.0 token is 100,000,000).
+                    {selectedTokenPriceUsd && amountIn && (
+                      <Box mt={1} color="blue.600">
+                        Approx. value: $
+                        {(
+                          (parseFloat(amountIn) / Math.pow(10, selectedToken.decimals)) *
+                          selectedTokenPriceUsd
+                        ).toFixed(2)}
+                      </Box>
+                    )}
+                  </Box>
                 )}
               </FormHelperText>
               {(errors as any)?.buybackAndBurnData?.amountIn && (
@@ -565,63 +862,67 @@ export function DAOBuybackAndBurnForm() {
             </FormControl>
           </Box>
 
-          <Box>
-            <FormControl>
-              <Flex justify="space-between" align="center" mb={2}>
-                <FormLabel fontWeight="semibold" mb={0}>
-                  Minimum Quote Out
-                </FormLabel>
-                <Flex align="center" gap={2}>
-                  <Text fontSize="sm">Use %</Text>
-                  <Switch
-                    isChecked={usePercentMinQuoteOut}
-                    onChange={(e) => setUsePercentMinQuoteOut(e.target.checked)}
-                  />
+          {!isDirectQuote && (
+            <Box>
+              <FormControl>
+                <Flex justify="space-between" align="center" mb={2}>
+                  <FormLabel fontWeight="semibold" mb={0}>
+                    Minimum Quote Out (Raw units)
+                  </FormLabel>
+                  <Flex align="center" gap={2}>
+                    <Text fontSize="sm">Use %</Text>
+                    <Switch
+                      isChecked={usePercentMinQuoteOut}
+                      onChange={(e) => setUsePercentMinQuoteOut(e.target.checked)}
+                    />
+                  </Flex>
                 </Flex>
-              </Flex>
-              {usePercentMinQuoteOut ? (
-                <InputGroup>
+                {usePercentMinQuoteOut ? (
+                  <InputGroup>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={minQuoteOutPercent}
+                      onChange={(e) => handleMinQuoteOutPercentChange(e.target.value)}
+                    />
+                    <InputRightAddon>%</InputRightAddon>
+                  </InputGroup>
+                ) : (
                   <Input
                     type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={minQuoteOutPercent}
-                    onChange={(e) => handleMinQuoteOutPercentChange(e.target.value)}
+                    step="1"
+                    placeholder={`Enter raw minimum USDC output`}
+                    {...register("buybackAndBurnData.minQuoteOut")}
                   />
-                  <InputRightAddon>%</InputRightAddon>
-                </InputGroup>
-              ) : (
-                <Input
-                  type="text"
-                  placeholder={`Enter minimum quote output (${quoteTokenDecimals} decimals)`}
-                  {...register("buybackAndBurnData.minQuoteOut", {
-                    required: "Min quote out is required",
-                    validate: (v) => {
-                      const num = parseFloat(v || "");
-                      if (isNaN(num) || num < 0) return "Value must be non-negative";
-                      return true;
-                    },
-                  })}
-                />
-              )}
-              <FormHelperText>
-                Minimum amount of quote token (USDC) to receive from the first swap.
-                {usePercentMinQuoteOut && " Calculated as percentage of amountIn."}
-              </FormHelperText>
-              {(errors as any)?.buybackAndBurnData?.minQuoteOut && (
-                <Text color="red.500" fontSize="sm">
-                  {(errors as any).buybackAndBurnData.minQuoteOut.message}
-                </Text>
-              )}
-            </FormControl>
-          </Box>
+                )}
+                <FormHelperText>
+                  Minimum amount of USDC to receive from the first swap.
+                  {usePercentMinQuoteOut
+                    ? " Calculated as percentage of amount to sell, adjusted by current market price."
+                    : // eslint-disable-next-line max-len
+                      " If the actual output is lower than this during execution, the transaction will fail with a slippage error."}
+                  {selectedTokenPriceUsd && (
+                    <Box as="span" display="block" color="blue.600" mt={1}>
+                      Current price: 1 {selectedToken?.symbol || "token"} ≈ {selectedTokenPriceUsd.toFixed(6)} USDC
+                    </Box>
+                  )}
+                </FormHelperText>
+                {(errors as any)?.buybackAndBurnData?.minQuoteOut && (
+                  <Text color="red.500" fontSize="sm">
+                    {(errors as any).buybackAndBurnData.minQuoteOut.message}
+                  </Text>
+                )}
+              </FormControl>
+            </Box>
+          )}
 
           <Box>
             <FormControl>
               <Flex justify="space-between" align="center" mb={2}>
                 <FormLabel fontWeight="semibold" mb={0}>
-                  Minimum KAI Out
+                  Minimum KAI Out (Raw units)
                 </FormLabel>
                 <Flex align="center" gap={2}>
                   <Text fontSize="sm">Use %</Text>
@@ -645,21 +946,25 @@ export function DAOBuybackAndBurnForm() {
                 </InputGroup>
               ) : (
                 <Input
-                  type="text"
-                  placeholder="Enter minimum KAI output (raw units)"
-                  {...register("buybackAndBurnData.minAmountOut", {
-                    required: "Min amount out is required",
-                    validate: (v) => {
-                      const num = parseFloat(v || "");
-                      if (isNaN(num) || num < 0) return "Value must be non-negative";
-                      return true;
-                    },
-                  })}
+                  type="number"
+                  step="1"
+                  placeholder={`Enter raw minimum ${daoTokenInfo.symbol || "DAO"} output`}
+                  {...register("buybackAndBurnData.minAmountOut")}
                 />
               )}
               <FormHelperText>
-                Minimum amount of KAI tokens to receive from the final swap.
-                {usePercentMinAmountOut && " Calculated as percentage of expected output."}
+                Minimum amount of {daoTokenInfo.symbol || "DAO"} tokens to receive from the final swap.
+                {usePercentMinAmountOut
+                  ? " Calculated as percentage of expected output, adjusted by current market price."
+                  : // eslint-disable-next-line max-len
+                    " If the actual output is lower than this during execution, the transaction will fail with a slippage error."}
+                {selectedTokenPriceUsd && daoTokenPriceUsd && (
+                  <Box as="span" display="block" color="blue.600" mt={1}>
+                    {/* eslint-disable-next-line max-len */}
+                    Current rate: 1 {selectedToken?.symbol || "token"} ≈{" "}
+                    {(selectedTokenPriceUsd / daoTokenPriceUsd).toFixed(6)} {daoTokenInfo.symbol || "DAO"}
+                  </Box>
+                )}
               </FormHelperText>
               {(errors as any)?.buybackAndBurnData?.minAmountOut && (
                 <Text color="red.500" fontSize="sm">
@@ -684,8 +989,24 @@ export function DAOBuybackAndBurnForm() {
                 <InputRightAddon>USD</InputRightAddon>
               </InputGroup>
               <FormHelperText>
-                Maximum price you are willing to pay per KAI token in dollars (up to 6 decimals). Leave empty or 0 for
-                no limit.
+                {/* eslint-disable-next-line max-len */}
+                Maximum price you are willing to pay per {daoTokenInfo.symbol || "DAO"} token in dollars (up to 6
+                decimals). Leave empty or 0 for no limit.
+                {daoTokenPriceUsd && (
+                  <Box as="span" display="block" mt={1}>
+                    Current market price:{" "}
+                    <Text
+                      as="span"
+                      color="blue.600"
+                      fontWeight="bold"
+                      cursor="pointer"
+                      textDecoration="underline"
+                      onClick={() => handleMaxHtkPriceChange(daoTokenPriceUsd.toString())}
+                    >
+                      ${daoTokenPriceUsd.toFixed(6)}
+                    </Text>
+                  </Box>
+                )}
               </FormHelperText>
             </FormControl>
           </Box>
