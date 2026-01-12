@@ -922,7 +922,7 @@ export function DAOBuybackAndBurnForm() {
             <FormControl>
               <Flex justify="space-between" align="center" mb={2}>
                 <FormLabel fontWeight="semibold" mb={0}>
-                  Minimum KAI Out (Raw units)
+                  Minimum DAO Token Out (Raw units)
                 </FormLabel>
                 <Flex align="center" gap={2}>
                   <Text fontSize="sm">Use %</Text>
@@ -976,7 +976,7 @@ export function DAOBuybackAndBurnForm() {
 
           <Box>
             <FormControl>
-              <FormLabel fontWeight="semibold">Maximum KAI Price (in dollars)</FormLabel>
+              <FormLabel fontWeight="semibold">Maximum DAO Token Price (in dollars)</FormLabel>
               <InputGroup>
                 <Input
                   type="number"
