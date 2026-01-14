@@ -102,6 +102,7 @@ export interface WhitelistPairInput {
 export interface BuybackAndBurnInput {
   tokenIn: string;
   pathToQuote: string;
+  pathQuoteToHtk: string;
   amountIn: string;
   minQuoteOut: string;
   minAmountOut: string;

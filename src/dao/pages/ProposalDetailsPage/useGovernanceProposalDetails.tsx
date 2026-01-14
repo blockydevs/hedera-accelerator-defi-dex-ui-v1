@@ -177,6 +177,35 @@ async function buildFancyDescription(proposal: Proposal): Promise<string> {
       }`;
       return ["Parameters", currentLine, proposedLine].join("\n");
     }
+
+    if (proposal.type === ProposalType.BuybackAndBurnProposal) {
+      const data = (proposal.data as any) || {};
+      const tokenIn: string = data?.tokenIn || "";
+      const amountIn: string = data?.amountIn || "0";
+      const minQuoteOut: string = data?.minQuoteOut || "0";
+      const minAmountOut: string = data?.minAmountOut || "0";
+      const maxHtkPriceD18: string = data?.maxHtkPriceD18 || "0";
+      const deadline: string = data?.deadline || "0";
+
+      const symIn = await fetchTokenSymbol(tokenIn);
+      const inLabel = symIn ? `${symIn} (${shortenAddress(tokenIn)})` : shortenAddress(tokenIn);
+
+      const maxPrice = new BigNumber(maxHtkPriceD18).shiftedBy(-18).toString();
+      const isNoLimit = maxHtkPriceD18 === "0" || maxHtkPriceD18 === ethers.constants.MaxUint256.toString();
+      const deadlineDate = new Date(Number(deadline) * 1000).toLocaleString();
+
+      const lines = [
+        `Buyback and Burn`,
+        `Token to sell: ${inLabel}`,
+        `Amount in: ${amountIn} (raw units)`,
+        `Min quote out: ${minQuoteOut} (raw units)`,
+        `Min KAI out: ${minAmountOut} (raw units)`,
+        `Max KAI price: ${isNoLimit ? "No limit" : `$${maxPrice}`}`,
+        `Deadline: ${deadlineDate}`,
+      ];
+
+      return lines.join("\n");
+    }
   } catch {
     /* ignore */
   }
