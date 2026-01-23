@@ -281,7 +281,7 @@ export function useGovernanceProposalDetails(daoAccountId: string, proposalId: s
 
   function handleExecuteProposalSuccess(transactionResponse: TransactionResponse) {
     executeProposal.reset();
-    const message = "Proposal has been executed.";
+    const message = "Execution of the proposal has started.";
     handleTransactionSuccess(transactionResponse, message);
   }
   const subDescriptionQuery = useQuery<
