@@ -22,8 +22,8 @@ import { SINGLE_DAO_ID } from "@dao/config/singleDao";
 const PageLimit = 10;
 
 const transactionTabFilters = [
-  [ProposalStatus.Pending, ProposalStatus.Queued],
-  [ProposalStatus.Success, ProposalStatus.Failed],
+  [ProposalStatus.Pending],
+  [ProposalStatus.Queued, ProposalStatus.Success, ProposalStatus.Failed],
 ];
 const defaultTransactionFilters = [
   ProposalStatus.Pending,

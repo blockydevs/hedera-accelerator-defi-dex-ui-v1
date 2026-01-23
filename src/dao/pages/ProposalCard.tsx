@@ -22,27 +22,10 @@ export const ProposalCard = (props: ProposalCardProps) => {
   const location = useLocation();
 
   const isGovernanceOrNFT = dao.type === DAOType.GovernanceToken || dao.type === DAOType.NFT;
-  const timeRemaining = "";
-  const votingEndTime = "";
   const { amount, token, transactionHash, proposalId } = proposal;
   const tokenSymbol = token?.data.symbol;
   const RightContent = () => (
     <Flex gap="4" alignItems="center">
-      {
-        <>
-          {timeRemaining ? (
-            <Text.P_Small_Regular color={Color.Neutral._400}>{`${timeRemaining} left`}</Text.P_Small_Regular>
-          ) : (
-            <>
-              {votingEndTime && (
-                <Text.P_Small_Regular
-                  color={Color.Neutral._400}
-                >{`voting ended on ${votingEndTime}`}</Text.P_Small_Regular>
-              )}
-            </>
-          )}
-        </>
-      }
       {showTypeTag ? <Tag variant={TagVariant.Secondary} label={`${dao.type} DAO`} /> : <></>}
       <Tag variant={TagVariant.Primary} label={proposal.type} />
     </Flex>

@@ -26,9 +26,11 @@ export function useGovernanceDAOProposals(
     return proposals.filter((proposal) => proposalFilter.includes(proposal.status));
   }
 
-  const getStatus = (state: ProposalState | undefined): ProposalStatus => {
+  const getStatus = (state: ProposalState | undefined, votingEndTime: number | undefined): ProposalStatus => {
+    const currentTime = new Date().getTime();
+    const isExpired = isNotNil(votingEndTime) && currentTime > Number(votingEndTime) * 1000;
     if (state === ProposalState.Active || state === ProposalState.Pending) {
-      return ProposalStatus.Pending;
+      return isExpired ? ProposalStatus.Failed : ProposalStatus.Pending;
     }
     if (state === ProposalState.Succeeded || state === ProposalState.Queued) {
       return ProposalStatus.Queued;
@@ -179,9 +181,11 @@ export function useGovernanceDAOProposals(
     const proposalState = proposalData.state
       ? (ContractProposalState[proposalData.state] as keyof typeof ContractProposalState)
       : (ContractProposalState[0] as keyof typeof ContractProposalState);
-    const endTime = proposalData?.coreInformation?.voteEnd;
+    const endTime = isNotNil(proposalData?.coreInformation?.voteEnd)
+      ? Number(proposalData?.coreInformation?.voteEnd)
+      : undefined;
     const currentTime = new Date().getTime();
-    const timeRemaining = currentTime < endTime ? (endTime - currentTime) / 1000 : 0;
+    const timeRemaining = isNotNil(endTime) && currentTime < endTime * 1000 ? (endTime * 1000 - currentTime) / 1000 : 0;
     const hasVoted = isNotNil(
       proposalData.votersList?.find(
         (voterInfo) => currentWalletId === solidityAddressToAccountIdString(voterInfo.voter)
@@ -197,7 +201,7 @@ export function useGovernanceDAOProposals(
       approvalCount: 0,
       approvers: [],
       event: ProposalEvent.Send,
-      status: getStatus(ProposalState[proposalState]),
+      status: getStatus(ProposalState[proposalState], endTime),
       timestamp: proposalData.timestamp,
       tokenId: proposalData.tokenAddress ?? "",
       token: tokenData,
