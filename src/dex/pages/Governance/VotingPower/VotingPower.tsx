@@ -91,35 +91,16 @@ export const VotingPower = (props: VotingPowerComponentProps) => {
             isLoading={isFormLoading}
             hidePendingStatus
           />
-          {doesUserHaveGOVTokensToLockAndUnlock ? (
-            <ManageVotingPower
-              tokenSymbol={tokenData.symbol ?? ""}
-              isLoading={isFormLoading}
-              canUserClaimGODTokens={canUserClaimGODTokens}
-              lockedGODToken={votingPower!}
-              totalGODTokenBalance={tokenData.total}
-              availableGODTokenBalance={tokenData.available}
-              onLockClick={handleClickLockGodTokenButton}
-              onUnlockClick={handleClickUnLockGodTokenButton}
-            />
-          ) : isWalletConnected ? (
-            <Button
-              as="a"
-              key="swap"
-              variant="secondary"
-              width="105px"
-              leftIcon={<SwapIcon />}
-              href={"https://defi-ui.zilbo.com/swap"}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Text.P_Small_Semibold>Swap</Text.P_Small_Semibold>
-            </Button>
-          ) : (
-            <Button key="swap" variant="secondary" width="155px" onClick={handleConnectToWalletClick}>
-              <Text.P_Small_Semibold>Connect To Wallet</Text.P_Small_Semibold>
-            </Button>
-          )}
+          <ManageVotingPower
+            tokenSymbol={tokenData.symbol ?? ""}
+            isLoading={isFormLoading}
+            canUserClaimGODTokens={canUserClaimGODTokens}
+            lockedGODToken={votingPower!}
+            totalGODTokenBalance={tokenData.total}
+            availableGODTokenBalance={tokenData.available}
+            onLockClick={handleClickLockGodTokenButton}
+            onUnlockClick={handleClickUnLockGodTokenButton}
+          />
         </HStack>
         <LoadingDialog isOpen={isLoading} message={loadingDialogMessage} />
         <LoadingDialog
