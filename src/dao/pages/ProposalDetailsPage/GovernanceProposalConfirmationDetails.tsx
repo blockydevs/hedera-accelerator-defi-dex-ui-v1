@@ -84,7 +84,7 @@ export function GovernanceProposalConfirmationDetails(props: GovernanceProposalC
   // UI override: allow forcing Governor contract id via env VITE_GOVERNOR_CONTRACT_ID
   const envGovernorId: string = ((import.meta as any).env?.VITE_GOVERNOR_CONTRACT_ID || "").toString().trim();
   const contractId = envGovernorId || (contractIdQueryResults.data?.data.contract_id ?? "");
-  const isVotingDisabled = !proposal || isNaN(Number(votingPower)) || Number(votingPower) <= 0;
+  const isVotingDisabled = !proposal;
   const isAdminApprovalButtonVisible = (proposal?.data as any)?.isAdminApprovalButtonVisible ?? false;
   const isApproveAdminButtonDisabled = walletId !== (proposal?.data as any)?.proxyAdmin;
   const isContractUpgradeProposal = proposal?.isContractUpgradeProposal;
