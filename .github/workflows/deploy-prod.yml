@@ -1,0 +1,60 @@
+name: Deploy to prod
+
+on:
+  push:
+    branches: [prod]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      output1: ${{ steps.upload-artifacts.outputs.artifact-url }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '18'
+          cache: 'yarn'
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Copy ENV file
+        run: echo "${{ vars.APP_ENV_FILE_PROD }}" > .env
+
+      - name: Build with environment variables
+        run: yarn build
+        env:
+          VITE_SAUCERSWAP_API_KEY: ${{ secrets.VITE_SAUCERSWAP_API_KEY_PROD }}
+
+      - name: Upload artifacts
+        id: upload-artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: page
+          path: ./build
+          retention-days: 1
+
+  deploy:
+    runs-on: blockyresearch-prod
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        env:
+          url: ${{needs.job1.outputs.output1}}
+        run: |
+          wget -O page.zip ${url}
+          unzip page.zip
+          rm -rf /var/www/dao.kairosdao.tech/*
+          tar -xvf artifact.tar -C /var/www/dao.kairosdao.tech
