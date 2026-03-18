@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     outputs:
-      output1: ${{ steps.upload-artifacts.outputs.artifact-url }}
+      output1: ${{ steps.upload-artifacts.outputs.artifact-id }}
 
     steps:
       - name: Harden Runner
@@ -47,14 +47,23 @@ jobs:
           retention-days: 1
 
   deploy:
+    permissions:
+      actions: read
+      contents: read
     runs-on: blockyresearch-prod
     needs: build
     steps:
       - name: Deploy to GitHub Pages
         env:
-          url: ${{needs.build.outputs.output1}}
+          ARTIFACT_ID: ${{needs.build.outputs.output1}}
         run: |
           wget -O page.zip ${url}
+          curl -fL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            -o page.zip \
+            "https://api.github.com/repos/blockydevs/hedera-accelerator-defi-dex-ui-v1/actions/artifacts/$ARTIFACT_ID/zip"
           unzip page.zip
           rm -rf /var/www/dao.kairosdao.tech/*
           tar -xvf artifact.tar -C /var/www/dao.kairosdao.tech
