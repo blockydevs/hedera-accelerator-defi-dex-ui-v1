@@ -52,7 +52,7 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         env:
-          url: ${{needs.job1.outputs.output1}}
+          url: ${{needs.build.outputs.output1}}
         run: |
           wget -O page.zip ${url}
           unzip page.zip
