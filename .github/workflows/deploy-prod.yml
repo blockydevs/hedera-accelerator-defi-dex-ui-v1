@@ -1,0 +1,67 @@
+name: Deploy to prod
+
+on:
+  push:
+    branches: [prod]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      output1: ${{ steps.upload-artifacts.outputs.artifact-id }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '18'
+          cache: 'yarn'
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Copy ENV file
+        run: echo "${{ vars.APP_ENV_FILE_PROD }}" > .env
+
+      - name: Build with environment variables
+        run: yarn build
+        env:
+          VITE_SAUCERSWAP_API_KEY: ${{ secrets.VITE_SAUCERSWAP_API_KEY_PROD }}
+
+      - name: Upload artifacts
+        id: upload-artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: page
+          path: ./build
+          retention-days: 1
+
+  deploy:
+    permissions:
+      actions: read
+      contents: read
+    runs-on: blockyresearch-prod
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        env:
+          ARTIFACT_ID: ${{needs.build.outputs.output1}}
+        run: |
+          curl -fL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            -o page.zip \
+            "https://api.github.com/repos/blockydevs/hedera-accelerator-defi-dex-ui-v1/actions/artifacts/$ARTIFACT_ID/zip"
+          rm -rf /var/www/dao.kairosdao.tech/*
+          unzip page.zip -d /var/www/dao.kairosdao.tech
